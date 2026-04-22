@@ -25,16 +25,23 @@ def index():
 
 @bp.get("/<path:filename>")
 def serve_any(filename: str):
-    """Serve qualquer arquivo da pasta static/ (inclui HTMLs das automações)."""
+    """Serve qualquer arquivo da pasta static/ (inclui HTMLs das automações).
+
+    IMPORTANTE: paths começando com "api/" ou "healthz" são reservados para
+    as rotas da API e do healthcheck — o catch-all NÃO deve interceptá-los,
+    senão métodos não-GET (POST/DELETE/PATCH) retornam 405 em vez de serem
+    roteados corretamente.
+    """
+    if filename.startswith(("api/", "healthz")):
+        abort(404)
+
     base = _static_dir()
-    # Resolve evitando path traversal.
     candidate = (base / filename).resolve()
     try:
         candidate.relative_to(base.resolve())
     except ValueError:
         abort(404)
     if candidate.is_dir():
-        # Se é uma pasta, tenta servir index.html interno (ex: Setor Fiscal/).
         inner = candidate / "index.html"
         if inner.exists():
             return send_from_directory(base, f"{filename.rstrip('/')}/index.html")
