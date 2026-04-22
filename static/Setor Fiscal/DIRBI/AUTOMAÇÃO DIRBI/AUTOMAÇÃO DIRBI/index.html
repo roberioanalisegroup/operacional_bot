@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automação SPED Contribuições - M410</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- SheetJS para exportar Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Automação SPED Contribuições</h1>
+            <p class="subtitle">Análise de Registros M410 e Geração de Planilhas</p>
+        </header>
+
+        <!-- Seção 1: Upload do Arquivo SPED -->
+        <section class="card">
+            <h2>1. Selecionar Arquivo SPED</h2>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                <div class="upload-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Clique para selecionar ou arraste o arquivo SPED (.txt)</p>
+                    <span class="file-name" id="fileName">Nenhum arquivo selecionado</span>
+                </div>
+            </div>
+            <button id="processBtn" class="btn btn-primary" disabled>Processar Arquivo</button>
+        </section>
+
+        <!-- Seção 2: Estatísticas -->
+        <section class="card" id="statsSection" style="display: none;">
+            <h2>2. Estatísticas</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total de Registros</div>
+                    <div class="stat-value" id="totalRegistros">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Valor Total</div>
+                    <div class="stat-value" id="valorTotal">R$ 0,00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Códigos Encontrados</div>
+                    <div class="stat-value" id="codigosEncontrados">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Tabela de Dados -->
+        <section class="card" id="dataSection" style="display: none;">
+            <h2>3. Dados Extraídos</h2>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Código da Receita</th>
+                            <th>Valor da Receita</th>
+                            <th>COFINS (7,6%)</th>
+                            <th>PIS (1,65%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                    <tfoot id="tableFooter" style="display: none;">
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- Seção 4: Ações -->
+        <section class="card" id="actionsSection" style="display: none;">
+            <h2>4. Ações</h2>
+            <div class="actions-grid">
+                <button id="createModelBtn" class="btn btn-secondary">
+                    📄 Criar Planilha Modelo
+                </button>
+                <button id="exportBtn" class="btn btn-success" disabled>
+                    💾 Exportar Planilha Preenchida
+                </button>
+            </div>
+        </section>
+
+        <!-- Seção de Avisos -->
+        <div id="alertContainer"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

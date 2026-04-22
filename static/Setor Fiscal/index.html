@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central de Automações Fiscais</title>
+  <meta name="auth-root" content="/">
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/auth-guard.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b0b;
+      --panel: #141414;
+      --panel-strong: #1c1c1c;
+      --panel-border: #2d2d2d;
+      --text: #f5f1e8;
+      --muted: #b8b0a4;
+      --brand-dark: #111111;
+      --brand-black: #000000;
+      --brand-gold: #e9af29;
+      --brand-soft: rgba(233, 175, 41, 0.12);
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.18), transparent 24%),
+        linear-gradient(180deg, #050505 0%, var(--bg) 280px);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.98) 0%, rgba(17, 17, 17, 0.94) 62%, rgba(233, 175, 41, 0.88) 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(233, 175, 41, 0.22);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 8px 14px 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-chip img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(233, 175, 41, 0.2));
+    }
+
+    .brand-chip span {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .home-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(233, 175, 41, 0.32);
+      background: rgba(0, 0, 0, 0.26);
+      color: #fff7df;
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+    }
+
+    .home-icon {
+      color: var(--brand-gold);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.9rem, 2.8vw, 2.8rem);
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.88);
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat {
+      min-width: 180px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(6px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .section-title {
+      margin: 30px 0 14px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f4e1ab;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .section-title::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 4px;
+      border-radius: 999px;
+      background: var(--brand-gold);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel-strong) 0%, var(--panel) 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 235px;
+      position: relative;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.12rem;
+      line-height: 1.35;
+      color: #ffffff;
+    }
+
+    .card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 1;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-self: flex-start;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: #f3cb70;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .links {
+      display: grid;
+      gap: 10px;
+    }
+
+    .link-button {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 12px 14px;
+      text-decoration: none;
+      color: #fff7df;
+      background: #1b1b1b;
+      border: 1px solid rgba(233, 175, 41, 0.32);
+      border-radius: 12px;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .link-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(233, 175, 41, 0.18);
+      border-color: var(--brand-gold);
+      background: #222222;
+    }
+
+    .link-button small {
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .arrow {
+      flex: 0 0 auto;
+      margin-left: 12px;
+      font-size: 0.92rem;
+      color: var(--brand-gold);
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #111111;
+      border: 1px solid rgba(233, 175, 41, 0.2);
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .footer-note strong {
+      color: #f3cb70;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 20px 14px 32px;
+      }
+
+      .hero,
+      .card {
+        padding: 20px;
+      }
+
+      .link-button {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="brand-chip">
+        <img src="./assets/logo-analise-group.png" alt="Logo da Análise Group">
+        <span>Análise Group</span>
+      </div>
+      <a class="home-button" href="../index.html">
+        <span class="home-icon">&#8962;</span>
+        <span>Menu Inicial</span>
+      </a>
+      <h1>Central de Automações Fiscais</h1>
+      <p>
+        Painel interno para acessar rapidamente as automações do setor fiscal.
+        Cada botão abre a ferramenta correspondente e mantém esta página como ponto central de navegação.
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="totalAutomacoes">0</strong>
+          <span>grupos de automações</span>
+        </div>
+        <div class="stat">
+          <strong id="totalAtalhos">0</strong>
+          <span>atalhos disponíveis</span>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Automatizações disponíveis</h2>
+    <section id="cards" class="cards" aria-label="Lista de automações"></section>
+
+    <div class="footer-note">
+      <strong>Padrão visual ajustado para a identidade da Análise Group.</strong>
+      Se uma automação ganhar novas versões ou telas, basta adicionar o novo arquivo ao bloco correspondente deste painel.
+    </div>
+  </main>
+
+  <script>
+    const automacoes = [
+      {
+        categoria: "Inventário",
+        nome: "Ajuste de Inventário por Excel",
+        descricao: "Processamentos do ajuste de inventário com opções separadas para rotina completa e processamento focado no bloco H.",
+        links: [
+          {
+            label: "Processamento de todos os blocos",
+            detalhe: "Fluxo completo do ajuste de inventário",
+            href: "./AJUSTE%20DE%20INVENT%C3%81RIO%20POR%20EXCEL/INDEX%20-%20PROCESSAMENTO%20DE%20TODOS%20OS%20BLOCOS.html"
+          },
+          {
+            label: "Processamento apenas do bloco H",
+            detalhe: "Indicado para empresas grandes",
+            href: "./AJUSTE%20DE%20INVENT%C3%81RIO%20POR%20EXCEL/INDEX%20-%20PROCESSAMENTO%20APENAS%20DO%20BLOCO%20H%20%28EMPRESAS%20GRANDES%29.html"
+          }
+        ]
+      },
+      {
+        categoria: "Faturamento",
+        nome: "Comparativo de Faturamento",
+        descricao: "Dashboard de análise para comparar os resultados de faturamento de forma visual e rápida.",
+        links: [
+          {
+            label: "Abrir dashboard",
+            detalhe: "Tela principal do comparativo",
+            href: "./COMPARATIVO%20DE%20FATURAMENTO/dashboard.html"
+          }
+        ]
+      },
+      {
+        categoria: "Tributário",
+        nome: "Comparativo Tributário - Reforma Tributária",
+        descricao: "Ferramenta para simulações e comparações ligadas ao cenário de reforma tributária.",
+        links: [
+          {
+            label: "Abrir comparativo tributário",
+            detalhe: "Página principal da automação",
+            href: "./Comparativo%20Tribut%C3%A1rio%20-%20Reforma%20Tribut%C3%A1ria/index.html"
+          }
+        ]
+      },
+      {
+        categoria: "Transferências",
+        nome: "Cruzamento de Transferências - Domínio",
+        descricao: "Rotina de apoio para cruzamento e análise de transferências no ambiente Domínio.",
+        links: [
+          {
+            label: "Abrir cruzamento de transferências",
+            detalhe: "Ferramenta principal",
+            href: "./CRUZAMENTO%20DE%20TRANSFERENCIAS%20-%20DOMINIO/CRUZAMENTO%20DE%20TRANSFER%C3%8ANCIAS%20-%20DOMINIO.html"
+          }
+        ]
+      },
+      {
+        categoria: "Cruzamento",
+        nome: "Cruzamento EFD ICMS x Relatório de Entradas SEFAZ",
+        descricao: "Ferramenta em Excel para confrontar dados da EFD ICMS com o relatório de entradas da SEFAZ.",
+        links: [
+          {
+            label: "Abrir cruzamento EFD x SEFAZ",
+            detalhe: "Aplicação principal da rotina",
+            href: "./CRUZAMENTO%20EFD%20ICMS%20X%20RELAT%C3%93RIO%20DE%20ENTRADAS%20SEFAZ%20%28EXCEL%29/app.html"
+          }
+        ]
+      },
+      {
+        categoria: "DIRBI",
+        nome: "Automação DIRBI",
+        descricao: "Acesso à versão principal da automação DIRBI disponível diretamente na pasta central.",
+        links: [
+          {
+            label: "Abrir automação DIRBI",
+            detalhe: "Arquivo principal da ferramenta",
+            href: "./DIRBI/AutomacaoSPED.html"
+          }
+        ]
+      },
+      {
+        categoria: "SPED",
+        nome: "Excel - SPED",
+        descricao: "Conversor de SPED Fiscal entre TXT e Excel para facilitar análise e tratamento de arquivos.",
+        links: [
+          {
+            label: "Abrir conversor TXT ↔ Excel",
+            detalhe: "Ferramenta de conversão do SPED Fiscal",
+            href: "./EXCEL%20-%20SPED/sped-fiscal-converter.html"
+          }
+        ]
+      },
+      {
+        categoria: "Relatórios",
+        nome: "Extrair Relatórios de Vendas do SPED",
+        descricao: "Ferramenta para analisar informações do cadastro 0150 e documentos C100 no contexto da EFD ICMS.",
+        links: [
+          {
+            label: "Abrir analisador 0150 + C100",
+            detalhe: "Tela principal da análise",
+            href: "./EXTRAIR%20RELAT%C3%93RIOS%20DE%20VENDAS%20DO%20SPED/analisador-0150.html"
+          }
+        ]
+      }
+    ];
+
+    const cardsContainer = document.getElementById("cards");
+    const totalAutomacoes = document.getElementById("totalAutomacoes");
+    const totalAtalhos = document.getElementById("totalAtalhos");
+
+    totalAutomacoes.textContent = String(automacoes.length);
+    totalAtalhos.textContent = String(
+      automacoes.reduce((total, item) => total + item.links.length, 0)
+    );
+
+    automacoes.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const linksMarkup = item.links
+        .map(
+          (link) => `
+            <a class="link-button" href="${link.href}" target="_blank" rel="noopener noreferrer">
+              <span>
+                ${link.label}
+                <small>${link.detalhe}</small>
+              </span>
+              <span class="arrow">Abrir</span>
+            </a>
+          `
+        )
+        .join("");
+
+      card.innerHTML = `
+        <span class="tag">${item.categoria}</span>
+        <h2>${item.nome}</h2>
+        <p>${item.descricao}</p>
+        <div class="links">${linksMarkup}</div>
+      `;
+
+      cardsContainer.appendChild(card);
+    });
+  </script>
+</body>
+</html>

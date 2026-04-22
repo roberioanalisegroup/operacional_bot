@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruzamento de Transferências | Análise Group</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+      --bg-page: #0b0b0b;
+      --bg-card: #141414;
+      --header-bg: #101010;
+      --accent: #e9af29;
+      --accent-hover: #f0ba42;
+      --text: #f5f1e8;
+      --text-muted: #b7ae9f;
+      --border: #2f2a22;
+      --border-upload: rgba(233, 175, 41, 0.26);
+      --shadow: 0 10px 24px rgba(0,0,0,0.32);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.14), transparent 24%),
+        var(--bg-page);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .header {
+      background: var(--header-bg);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow);
+      border-bottom: 1px solid rgba(233, 175, 41, 0.18);
+    }
+    .header .logo {
+      height: 48px;
+      width: auto;
+      display: block;
+    }
+    .header .app-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+    .header .app-subtitle {
+      margin: 0.15rem 0 0;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.72);
+    }
+    .header .spacer {
+      flex: 1;
+    }
+    .home-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(233, 175, 41, 0.24);
+      background: rgba(255,255,255,0.06);
+      color: #fff7df;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .home-button .icon {
+      color: var(--accent);
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .page-title {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .card h2 {
+      margin: 0 0 1.5rem 0;
+      padding: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card h2::before {
+      content: '';
+      width: 4px;
+      height: 1em;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .upload-zone {
+      display: block;
+      margin-top: 0;
+      border: 2px dashed var(--border-upload);
+      border-radius: var(--radius-sm);
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      background: #191919;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .upload-zone:hover {
+      border-color: var(--accent);
+      background: #1d1a14;
+      color: var(--text);
+    }
+    .upload-zone input[type="file"] {
+      display: none;
+    }
+    .upload-zone.multiple input[type="file"] {
+      display: none;
+    }
+    .file-list {
+      margin-top: 1rem;
+      min-height: 1.5rem;
+    }
+    .file-list ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .file-list li {
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #171717;
+      border: 1px solid var(--border);
+    }
+    .file-list li:last-child {
+      margin-bottom: 0;
+    }
+    .file-list .label {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .file-list .name {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .btn-processar {
+      display: block;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 2px 4px rgba(201, 162, 39, 0.3);
+    }
+    .btn-processar:hover {
+      background: var(--accent-hover);
+    }
+    .btn-processar:active {
+      transform: scale(0.99);
+    }
+    .btn-processar:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .resultado-card {
+      display: none;
+    }
+    .resultado-card.visivel {
+      display: block;
+    }
+    .resultado-card .resumo {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .resultado-card .resumo strong {
+      color: var(--accent);
+    }
+    .btn-exportar {
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: #2d2d2d;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-exportar:hover {
+      background: #373737;
+    }
+    .btn-exportar:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .card-observacao {
+      background: #171717;
+      border-left: 4px solid var(--accent);
+    }
+    .card-observacao h2 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-observacao h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 1rem 0 0.4rem 0;
+    }
+    .card-observacao h3:first-of-type {
+      margin-top: 0;
+    }
+    .card-observacao ol, .card-observacao ul {
+      margin: 0 0 0 1.25rem;
+      padding: 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .card-observacao li {
+      margin-bottom: 0.25rem;
+      background: none;
+      border: none;
+      padding: 0;
+      display: list-item;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <img src="../assets/logo-analise-group.png" alt="Logo da Análise Group" class="logo" />
+    <div>
+      <h1 class="app-title">Cruzamento de Transferências</h1>
+      <p class="app-subtitle">Análise Group | Automação fiscal</p>
+    </div>
+    <div class="spacer"></div>
+    <a class="home-button" href="../../index.html">
+      <span class="icon">&#8962;</span>
+      <span>Menu Inicial</span>
+    </a>
+  </header>
+
+  <main class="main">
+    <h2 class="page-title">Envie os arquivos</h2>
+
+  <div class="card card-observacao">
+    <h2>Padrão dos relatórios</h2>
+    <p style="margin:0 0 0.5rem 0; font-size:0.9rem; color:var(--text-muted);">Antes de enviar os arquivos, exporte os relatórios em Excel conforme as instruções abaixo.</p>
+    <p style="margin:0 0 0.75rem 0; font-size:0.85rem; color:var(--text);"><strong>Colunas utilizadas no Excel:</strong> Data (C), Nota (E), Código (K), CFOP (O), Valor contábil (U/V/W). Linhas em branco só com dados da coluna U em diante, linhas de título mescladas (ex.: A até AH) e cabeçalhos repetidos por quebra de página são ignoradas.</p>
+    <p style="margin:0 0 0.75rem 0; font-size:0.8rem; color:var(--text-muted);"><strong>Data:</strong> A data é identificada apenas pela estrutura dd/mm/aaaa. Nenhuma parte da data (dia, mês ou ano) é usada como número da nota ou código.</p>
+    <p style="margin:0 0 0.75rem 0; font-size:0.8rem; color:var(--text-muted);"><strong>CFOP no cruzamento:</strong> Na saída, CFOP 5xxx equivale a 1xxx na entrada; CFOP 6xxx equivale a 2xxx na entrada.</p>
+    <h3>Relatório de Entradas</h3>
+    <ol>
+      <li>Ir em <strong>Relatórios → Acompanhamento → Entradas</strong>.</li>
+      <li>Informar o <strong>período inicial</strong> (data inicial e data final).</li>
+      <li>Deixar a ordem por <strong>fornecedor</strong>.</li>
+      <li>Na aba de <strong>seleção</strong>, marcar a opção <strong>Somente o fornecedor</strong>.</li>
+      <li>Incluir nas opções os <strong>códigos das filiais</strong> (uma entrada por filial, conforme as filiais desejadas).</li>
+    </ol>
+    <h3>Relatório de Saídas</h3>
+    <ol>
+      <li>Ir em <strong>Relatórios → Acompanhamento → Saídas</strong>.</li>
+      <li>Informar a <strong>data inicial</strong> e a <strong>data final</strong>.</li>
+      <li>Considerar a <strong>data de saída</strong>.</li>
+      <li>Deixar a ordem por <strong>cliente</strong>.</li>
+      <li>Na aba <strong>Seleção</strong>, marcar a opção <strong>Somente o cliente</strong>.</li>
+      <li>Clicar nos <strong>três pontinhos</strong> e adicionar o <strong>código da filial</strong>.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Excel de Saídas</h2>
+    <label class="upload-zone" id="zone-saidas">
+      <input type="file" id="input-saidas" accept=".xlsx,.xls" />
+      <span>Clique ou arraste 1 arquivo Excel (.xlsx ou .xls)</span>
+    </label>
+    <div class="file-list" id="list-saidas">
+      <ul id="ul-saidas"></ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Excel de Entradas</h2>
+    <label class="upload-zone multiple" id="zone-entradas">
+      <input type="file" id="input-entradas" accept=".xlsx,.xls" multiple />
+      <span>Clique ou arraste um ou mais arquivos Excel (.xlsx ou .xls)</span>
+    </label>
+    <div class="file-list" id="list-entradas">
+      <ul id="ul-entradas"></ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <button type="button" class="btn-processar" id="btn-processar">Processar Cruzamento</button>
+  </div>
+
+  <div class="card resultado-card" id="resultado-card">
+    <p class="resumo" id="resumo-divergencias"></p>
+    <button type="button" class="btn-exportar" id="btn-exportar" disabled>Exportar divergências (Excel)</button>
+  </div>
+
+  </main>
+
+  <!-- SheetJS (xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    const inputSaidas = document.getElementById('input-saidas');
+    const inputEntradas = document.getElementById('input-entradas');
+    const ulSaidas = document.getElementById('ul-saidas');
+    const ulEntradas = document.getElementById('ul-entradas');
+    const btnProcessar = document.getElementById('btn-processar');
+
+    /** Arquivo Excel de Saídas (um único arquivo). */
+    let arquivoSaidas = null;
+
+    /** Array de entradas no formato { id: "Entrada 01", file: File }. */
+    let arquivosEntradas = [];
+
+    /** Padrão de colunas (Data=C, Nota=E, Código=K, CFOP=O, Valor=U). Será sobrescrito por detectarColunas quando possível. */
+    const COL_PADRAO = { data: 2, nota: 4, codigo: 10, cfop: 14, valor: 20 };
+
+    /** Último resultado do cruzamento (para exportar Excel). */
+    let ultimasDivergencias = null;
+
+    const resultadoCard = document.getElementById('resultado-card');
+    const resumoDivergencias = document.getElementById('resumo-divergencias');
+    const btnExportar = document.getElementById('btn-exportar');
+
+    function atualizarListaSaidas() {
+      ulSaidas.innerHTML = '';
+      if (arquivoSaidas) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span class="label">Saídas:</span> <span class="name">' + escapeHtml(arquivoSaidas.name) + '</span>';
+        ulSaidas.appendChild(li);
+      }
+    }
+
+    function atualizarListaEntradas() {
+      ulEntradas.innerHTML = '';
+      arquivosEntradas.forEach(function (item) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span class="label">' + escapeHtml(item.id) + ':</span> <span class="name">' + escapeHtml(item.file.name) + '</span>';
+        ulEntradas.appendChild(li);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    /**
+     * Lê um arquivo Excel e retorna as linhas da primeira planilha (array de arrays).
+     */
+    function lerExcel(file) {
+      return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: 'array', cellDates: true });
+            const first = wb.SheetNames[0];
+            const sheet = wb.Sheets[first];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            resolve(rows);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    /** Extrai o nome da empresa pela linha 2 (C até U mescladas). */
+    function extrairNomeEmpresa(rows) {
+      try {
+        const row2 = rows && rows.length >= 2 ? rows[1] : null; // linha 2
+        if (!row2) return '';
+        for (let c = 2; c <= 20; c++) { // C..U
+          const v = String((row2[c] !== undefined && row2[c] !== null) ? row2[c] : '').trim();
+          if (v) return v;
+        }
+        return '';
+      } catch (_) {
+        return '';
+      }
+    }
+
+    /** Lê Excel e retorna { rows, empresa }. */
+    async function lerExcelComMeta(file) {
+      const rows = await lerExcel(file);
+      return { rows: rows, empresa: extrairNomeEmpresa(rows) };
+    }
+
+    function celula(row, col) {
+      const v = row && row[col];
+      if (v === undefined || v === null) return '';
+      return String(v).trim();
+    }
+
+    /**
+     * Detecta índices das colunas Data, Nota, Código, CFOP e Valor contábil nas primeiras linhas do Excel.
+     * Assim Saídas e cada Entrada podem ter colunas em posições diferentes.
+     */
+    function detectarColunas(rows) {
+      if (!rows || rows.length === 0) return null;
+      var cols = { data: -1, nota: -1, codigo: -1, cfop: -1, valor: -1 };
+      var maxRow = Math.min(25, rows.length);
+      for (var r = 0; r < maxRow; r++) {
+        var row = rows[r];
+        if (!row || !row.length) continue;
+        for (var c = 0; c < Math.min(35, row.length); c++) {
+          var cell = String(row[c] || '').trim().toLowerCase();
+          if ((cell === 'data' || cell === 'data emissão' || cell === 'data de emissão') && cols.data < 0) cols.data = c;
+          else if ((cell === 'nota' || cell === 'nº nota' || cell === 'n. nota' || cell === 'nota fiscal' || cell === 'numero' || cell === 'número' || cell.indexOf('nota') === 0) && cols.nota < 0) cols.nota = c;
+          else if ((cell === 'código' || cell === 'codigo') && cols.codigo < 0) cols.codigo = c;
+          else if (cell === 'cfop' && cols.cfop < 0) cols.cfop = c;
+          else if ((cell.indexOf('valor') >= 0 && (cell.indexOf('contábil') >= 0 || cell.indexOf('contabil') >= 0)) || (cell === 'valor' && cols.valor < 0)) cols.valor = c;
+        }
+        if (cols.data >= 0 && cols.nota >= 0 && cols.valor >= 0) break;
+      }
+      if (cols.data < 0 || cols.nota < 0 || cols.valor < 0) return null;
+      if (cols.codigo < 0) cols.codigo = cols.nota;
+      if (cols.cfop < 0) cols.cfop = 14;
+      return cols;
+    }
+
+    /** Verifica se a linha é cabeçalho (Data, Nota ou Código no cabeçalho). */
+    function ehLinhaCabecalho(row, col) {
+      if (!col) col = COL_PADRAO;
+      const c = celula(row, col.data);
+      const e = celula(row, col.nota);
+      const a = celula(row, 0);
+      return /^data$/i.test(c) || /^nota$/i.test(e) || /^código$/i.test(a) || /^codigo$/i.test(a);
+    }
+
+    /** Verifica se a linha é título mesclado (ex.: "ACOMPANHAMENTO DE ENTRADAS" em A até AH). */
+    function ehLinhaTituloMesclado(row) {
+      const a = celula(row, 0);
+      return /acompanhamento\s+(de\s+)?(entradas|saídas)/i.test(a);
+    }
+
+    /** Verifica se as colunas A até T estão vazias (linha só com U em diante). */
+    function soColunasUAteAH(row) {
+      for (let i = 0; i <= 19; i++) {
+        if (celula(row, i)) return false;
+      }
+      return true;
+    }
+
+    /** Verifica se é linha de total a ignorar. */
+    function ehLinhaTotal(row) {
+      const a = celula(row, 0);
+      return /Total\s+(Dia|Geral|Fornecedor)/i.test(a);
+    }
+
+    function excelSerialParaData(serial) {
+      if (typeof serial !== 'number' || isNaN(serial)) return '';
+      if (typeof XLSX.SSF !== 'undefined' && XLSX.SSF.parse_date_code) {
+        const d = XLSX.SSF.parse_date_code(serial);
+        if (d) return String(d.d).padStart(2, '0') + '/' + String(d.m).padStart(2, '0') + '/' + d.y;
+      }
+      var date = new Date((serial - 25569) * 86400 * 1000);
+      if (isNaN(date.getTime())) return '';
+      return String(date.getDate()).padStart(2, '0') + '/' + String(date.getMonth() + 1).padStart(2, '0') + '/' + date.getFullYear();
+    }
+
+    function formatarData(val) {
+      if (val === undefined || val === null || val === '') return '';
+      if (val instanceof Date) {
+        const d = val.getDate(), m = val.getMonth() + 1, y = val.getFullYear();
+        return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
+      }
+      if (typeof val === 'number') return excelSerialParaData(val);
+      const s = String(val).trim();
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
+      return s;
+    }
+
+    /** Normaliza data para chave de comparação: sempre dd/mm/aaaa com zero à esquerda. */
+    function dataParaChave(dataStr) {
+      if (!dataStr || typeof dataStr !== 'string') return '';
+      const parts = dataStr.trim().split(/\/+/);
+      if (parts.length !== 3) return dataStr;
+      const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
+      if (isNaN(d) || isNaN(m) || isNaN(y)) return dataStr;
+      return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
+    }
+
+    /** Normaliza CFOP para chave: 5→1, 6→2 e padroniza . ou - para hífen. */
+    function cfopParaChave(cfop) {
+      if (cfop === undefined || cfop === null) return '';
+      const t = String(cfop).trim().replace(/\./g, '-');
+      if (t.charAt(0) === '5') return '1' + t.slice(1);
+      if (t.charAt(0) === '6') return '2' + t.slice(1);
+      return t;
+    }
+
+    /** CFOP só com dígitos para comparação (ex.: "1-152" e "1152" viram "1152"). */
+    function cfopDigitos(cfop) {
+      const norm = cfopParaChave(cfop);
+      return norm.replace(/\D/g, '') || norm;
+    }
+
+    /** CFOPs considerados transferência (Saídas: 5xxx/6xxx; na Entrada equivalem a 1xxx/2xxx). */
+    var CFOP_TRANSFERENCIA = {
+      '5151': true, '5152': true, '5408': true, '5409': true, '5552': true, '5557': true,
+      '6151': true, '6152': true, '6408': true, '6409': true, '6552': true, '6557': true,
+      '5905': true, '5906': true, '6905': true, '6906': true
+    };
+
+    /** Normaliza CFOP para forma Saídas (dígitos; 1→5, 2→6) e verifica se é transferência válida. */
+    function cfopEhTransferenciaValida(cfop) {
+      var d = cfopDigitos(cfop);
+      if (!d || d.length < 4) return false;
+      var primeiro = d.charAt(0);
+      if (primeiro === '1') d = '5' + d.slice(1);
+      else if (primeiro === '2') d = '6' + d.slice(1);
+      return !!CFOP_TRANSFERENCIA[d];
+    }
+
+    /** Normaliza número da nota (só dígitos, sem zeros à esquerda) para cruzar Saídas e Entradas. */
+    function normalizarNota(s) {
+      const t = String(s || '').trim().replace(/\D/g, '');
+      if (!t) return '';
+      const n = parseInt(t, 10);
+      return isNaN(n) ? t : String(n);
+    }
+
+    /** Monta a chave única do segmento para comparar Saída com Entrada. */
+    function chaveSegmento(seg) {
+      return dataParaChave(seg.data) + '|' + String(seg.nota).trim() + '|' + cfopParaChave(seg.cfop);
+    }
+
+    function parseValorContabil(val) {
+      if (val === undefined || val === null || val === '') return NaN;
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      const s = String(val).replace(/\s*ICMS\s*/gi, '').trim();
+      const n = parseFloat(s.replace(/\./g, '').replace(',', '.'));
+      return isNaN(n) ? NaN : n;
+    }
+
+    /**
+     * Extrai segmentos do Excel. Detecta colunas pelo cabeçalho (Data, Nota, CFOP, Valor) para cada arquivo.
+     */
+    function extrairSegmentosExcel(rows) {
+      const segmentos = [];
+      if (!rows || !rows.length) return segmentos;
+      const col = detectarColunas(rows) || COL_PADRAO;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (ehLinhaCabecalho(row, col)) continue;
+        if (ehLinhaTituloMesclado(row)) continue;
+        if (soColunasUAteAH(row)) continue;
+        if (ehLinhaTotal(row)) continue;
+
+        const dataStr = formatarData(row[col.data]);
+        if (!dataStr) continue;
+        const dataNormalizada = dataParaChave(dataStr) || dataStr;
+
+        const nota = String(celula(row, col.nota)).replace(/\D/g, '') || '';
+        const codigo = String(celula(row, col.codigo)).replace(/\D/g, '') || nota;
+        const cfop = celula(row, col.cfop);
+        const valor = parseValorContabil(row[col.valor]);
+        if (!nota || isNaN(valor)) continue;
+
+        segmentos.push({
+          data: dataNormalizada,
+          nota: nota,
+          codigo: codigo || nota,
+          cfop: cfop,
+          valor: valor
+        });
+      }
+      return segmentos;
+    }
+
+    /**
+     * Extrai dados do Excel de Saídas ou Entradas. Retorna cada linha/segmento separado (sem agrupar por nota).
+     */
+    async function extrairDoExcel(file) {
+      const rows = await lerExcel(file);
+      return extrairSegmentosExcel(rows);
+    }
+
+    /** Extrai segmentos e o nome da empresa (linha 2 C..U). */
+    async function extrairDoExcelComMeta(file) {
+      const meta = await lerExcelComMeta(file);
+      return { segmentos: extrairSegmentosExcel(meta.rows), empresa: meta.empresa || '' };
+    }
+
+    /**
+     * Remove da lista de grupos de dígitos qualquer valor que seja ano (1990-2099),
+     * para nunca usar dia, mês ou ano da data como Código ou Nota.
+     */
+    function filtrarAnosDosGrupos(grupos) {
+      if (!grupos || !grupos.length) return [];
+      return grupos.filter(function (g) {
+        const n = parseInt(g, 10);
+        return g.length !== 4 || (n < 1990 || n > 2099);
+      });
+    }
+
+    /**
+     * Extrai segmentos (uma linha por bloco) do PDF.
+     *
+     * IMPORTANTE – Isolamento da data:
+     * A data é identificada SOMENTE pela estrutura dd/mm/aaaa (regex). Não se usa
+     * nenhuma parte da data (dia, mês, ano) como Código ou Nota. O trecho usado para
+     * extrair números é estritamente o que vem APÓS o fim da data (match completo).
+     * Colunas consideradas após a data: Código, Nota Série, CFOP, Valor contábil.
+     */
+    function extrairSegmentos(textoBruto) {
+      const resultado = [];
+      const dateRegex = /(\d{1,2})\/(\d{1,2})\/(\d{4})/g;
+      const valorRegex = /\d+(?:\.\d{3})*,\d{2}/g;
+      const cfopRegex = /\d{1,2}[-.]?\d{3}/g;
+
+      function dataValida(d, m, a) {
+        const dia = parseInt(d, 10);
+        const mes = parseInt(m, 10);
+        const ano = parseInt(a, 10);
+        if (mes < 1 || mes > 12) return false;
+        const ultimoDia = new Date(ano, mes, 0).getDate();
+        return dia >= 1 && dia <= ultimoDia;
+      }
+
+      const dateMatches = [];
+      for (const match of textoBruto.matchAll(dateRegex)) {
+        if (dataValida(match[1], match[2], match[3])) {
+          dateMatches.push({ index: match.index, data: match[0] });
+        }
+      }
+
+      for (let i = 0; i < dateMatches.length; i++) {
+        const start = dateMatches[i].index;
+        const end = i + 1 < dateMatches.length ? dateMatches[i + 1].index : textoBruto.length;
+        const bloco = textoBruto.slice(start, end);
+
+        if (/Total Dia|Total Geral|Total Fornecedor/i.test(bloco)) continue;
+
+        const dataStr = dateMatches[i].data;
+        // Só usamos o que vem DEPOIS da data completa (estrutura dd/mm/aaaa); nenhum dígito da data entra aqui.
+        const depoisDaData = bloco.slice(dataStr.length);
+
+        const gruposBrutos = depoisDaData.match(/\d+/g) || [];
+        let grupos = filtrarAnosDosGrupos(gruposBrutos);
+        // Evitar usar o ano desta data se aparecer como primeiro grupo (ex.: "19/02/2024 2024 1234")
+        const anoDaData = dataStr.length >= 4 ? dataStr.slice(-4) : '';
+        if (anoDaData && grupos.length > 0 && grupos[0] === anoDaData) grupos = grupos.slice(1);
+
+        // Código: primeiro grupo (não-ano) após a data; Nota: segundo (não usar dígito único de série como nota)
+        const codigo = grupos.length > 0 ? grupos[0].replace(/\D/g, '') : '';
+        let nota = '';
+        if (grupos.length > 1) {
+          const segundo = grupos[1];
+          nota = segundo.replace(/\D/g, '');
+          if (nota.length === 1 && grupos.length > 2) nota = grupos[2].replace(/\D/g, '');
+          else if (nota.length === 1) nota = codigo;
+        } else {
+          nota = codigo;
+        }
+
+        if (!codigo && !nota) continue;
+
+        const cfops = bloco.match(cfopRegex) || [];
+        const cfop = cfops.length > 0 ? cfops[0] : '';
+
+        const valores = bloco.match(valorRegex);
+        if (!valores || valores.length === 0) continue;
+        const valorStr = valores[valores.length - 1];
+        const valorNum = Number(valorStr.replace(/\./g, '').replace(',', '.'));
+
+        resultado.push({
+          data: dataStr,
+          nota: nota,
+          codigo: codigo || nota,
+          cfop: cfop,
+          valor: valorNum
+        });
+      }
+
+      return resultado;
+    }
+
+    /**
+     * Agrega segmentos por (Data, Nota): soma Valor contábil e junta CFOPs.
+     * Uma mesma nota pode ter vários segmentos (ex.: CFOP 5-152 e 5-409); o total é a soma.
+     */
+    function agregarPorNota(segmentos) {
+      const mapa = {};
+      segmentos.forEach(function (seg) {
+        const chave = seg.data + '|' + seg.nota;
+        if (!mapa[chave]) {
+          mapa[chave] = { data: seg.data, nota: seg.nota, codigo: seg.codigo, cfop: [], valor: 0 };
+        }
+        mapa[chave].valor += seg.valor;
+        if (seg.cfop && mapa[chave].cfop.indexOf(seg.cfop) === -1) mapa[chave].cfop.push(seg.cfop);
+      });
+      return Object.keys(mapa).map(function (k) {
+        const r = mapa[k];
+        return {
+          data: r.data,
+          nota: r.nota,
+          codigo: r.codigo,
+          cfop: r.cfop.join('; '),
+          valor: r.valor
+        };
+      });
+    }
+
+    function extrairSaidas(textoBruto) {
+      return agregarPorNota(extrairSegmentos(textoBruto));
+    }
+
+    /**
+     * Extrai notas estruturadas do texto do PDF de Entradas.
+     * Mesmos campos das Saídas: Data, Nota, Código, CFOP, Valor contábil.
+     */
+    function extrairEntradas(textoBruto) {
+      return extrairSaidas(textoBruto);
+    }
+
+    /**
+     * Normaliza um CFOP para comparação: 5xxx → 1xxx; 6xxx → 2xxx.
+     * Aceita string com vários CFOPs separados por "; " e normaliza cada um.
+     */
+    function normalizarCFOPParaComparacao(cfop) {
+      if (!cfop || typeof cfop !== 'string') return '';
+      return cfop.split(/\s*;\s*/).map(function (parte) {
+        const t = parte.trim();
+        if (t.charAt(0) === '5') return '1' + t.slice(1);
+        if (t.charAt(0) === '6') return '2' + t.slice(1);
+        return t;
+      }).sort().join('; ');
+    }
+
+    /** Chave por Nota + CFOP (só dígitos) para achar o mesmo lançamento. Nota normalizada para evitar 1234 vs 001234. */
+    function chaveNotaCfop(seg) {
+      return normalizarNota(seg.nota) + '|' + cfopDigitos(seg.cfop);
+    }
+
+    /**
+     * Cruzamento no formato solicitado:
+     * 1) Notas Omissas: nota não está em nenhum relatório de entrada (aba única).
+     * 2) Divergências (Data/Valor/CFOP/CFOP fora da lista): aba separada por relatório de entrada.
+     */
+    function cruzarSaidasComEntradas(saidas, entradas) {
+      const porEntrada = {};
+      entradas.forEach(function (ent) { porEntrada[ent.id] = []; });
+
+      const notaEmAlgumaEntrada = {};
+      const mapasPorEntrada = {};
+
+      for (let e = 0; e < entradas.length; e++) {
+        const ent = entradas[e];
+        const mapaNotaCfop = {};
+        ent.notas.forEach(function (n) {
+          const k = chaveNotaCfop(n);
+          if (!mapaNotaCfop[k]) mapaNotaCfop[k] = n;
+          notaEmAlgumaEntrada[normalizarNota(n.nota)] = true;
+        });
+        mapasPorEntrada[ent.id] = mapaNotaCfop;
+      }
+
+      // Omissas por NOTA (agregado)
+      const omissasMap = {};
+      for (let s = 0; s < saidas.length; s++) {
+        const sa = saidas[s];
+        const notaN = normalizarNota(sa.nota);
+        if (!notaN) continue;
+        if (notaEmAlgumaEntrada[notaN]) continue;
+        if (!omissasMap[notaN]) {
+          omissasMap[notaN] = {
+            Nota: sa.nota,
+            Codigo: sa.codigo,
+            data: sa.data || '',
+            valor: 0,
+            cfops: new Set()
+          };
+        }
+        omissasMap[notaN].valor += Number(sa.valor) || 0;
+        omissasMap[notaN].cfops.add(String(sa.cfop || '').trim());
+      }
+      const omissas = Object.keys(omissasMap).map(function (k) {
+        const o = omissasMap[k];
+        return {
+          Nota: o.Nota,
+          Codigo: o.Codigo,
+          'Data Saídas': o.data,
+          'Valor Saídas': o.valor,
+          'CFOP Saídas': Array.from(o.cfops).filter(Boolean).sort().join('; '),
+          'Descrição divergência': 'Omissão de nota'
+        };
+      });
+
+      // Divergências por entrada: somente quando o segmento existe naquela entrada
+      for (let e = 0; e < entradas.length; e++) {
+        const ent = entradas[e];
+        const mapa = mapasPorEntrada[ent.id] || {};
+        for (let s = 0; s < saidas.length; s++) {
+          const sa = saidas[s];
+          const segEntrada = mapa[chaveNotaCfop(sa)];
+          if (!segEntrada) continue;
+
+          const dataDiferente = dataParaChave(sa.data) !== dataParaChave(segEntrada.data);
+          const valorDiferente = Math.abs(Number(sa.valor) - Number(segEntrada.valor)) > 0.01;
+          const cfopDiferente = cfopDigitos(segEntrada.cfop) !== cfopDigitos(sa.cfop);
+          const cfopForaTransferencia = (!cfopEhTransferenciaValida(sa.cfop)) || (!cfopEhTransferenciaValida(segEntrada.cfop));
+
+          if (dataDiferente || valorDiferente || cfopDiferente || cfopForaTransferencia) {
+            const tipos = [];
+            if (dataDiferente) tipos.push('Data diferente');
+            if (valorDiferente) tipos.push('Valor diferente');
+            if (cfopDiferente) tipos.push('CFOP diferente');
+            if (cfopForaTransferencia) tipos.push('CFOP divergente de transferência');
+            porEntrada[ent.id].push({
+              Nota: sa.nota,
+              Codigo: sa.codigo,
+              'Data Saídas': sa.data || '',
+              'Data Entrada': segEntrada.data || '',
+              'Valor Saídas': sa.valor,
+              'Valor Entrada': segEntrada.valor,
+              'CFOP Saídas': sa.cfop || '',
+              'CFOP Entrada': segEntrada.cfop || '',
+              'Descrição divergência': tipos.join('; ')
+            });
+          }
+        }
+      }
+
+      const total = omissas.length + Object.keys(porEntrada).reduce(function (acc, k) { return acc + (porEntrada[k].length || 0); }, 0);
+      return { omissas: omissas, porEntrada: porEntrada, total: total };
+    }
+
+    inputSaidas.addEventListener('change', function () {
+      const files = this.files;
+      arquivoSaidas = files.length > 0 ? files[0] : null;
+      atualizarListaSaidas();
+    });
+
+    inputEntradas.addEventListener('change', function () {
+      const files = Array.from(this.files || []);
+      arquivosEntradas = files.map(function (file, index) {
+        const id = 'Entrada ' + String(index + 1).padStart(2, '0');
+        return { id: id, file: file };
+      });
+      atualizarListaEntradas();
+    });
+
+    btnProcessar.addEventListener('click', async function () {
+      try {
+        btnProcessar.disabled = true;
+        ultimasDivergencias = null;
+        resultadoCard.classList.remove('visivel');
+        btnExportar.disabled = true;
+
+        if (!arquivoSaidas || arquivosEntradas.length === 0) {
+          alert('Envie o Excel de Saídas e pelo menos um Excel de Entradas.');
+          btnProcessar.disabled = false;
+          return;
+        }
+
+        const saidasRes = await extrairDoExcelComMeta(arquivoSaidas);
+        const saidas = saidasRes.segmentos;
+
+        const entradasComNotas = [];
+        for (let i = 0; i < arquivosEntradas.length; i++) {
+          const item = arquivosEntradas[i];
+          const entRes = await extrairDoExcelComMeta(item.file);
+          entradasComNotas.push({ id: item.id, empresa: entRes.empresa || '', notas: entRes.segmentos });
+        }
+
+        const resultado = cruzarSaidasComEntradas(saidas, entradasComNotas);
+        resultado.entradas = entradasComNotas;
+        ultimasDivergencias = resultado;
+
+        resultadoCard.classList.add('visivel');
+        const qtd = resultado.total;
+        resumoDivergencias.textContent = qtd === 0
+          ? 'Nenhuma divergência encontrada entre Saídas e Entradas.'
+          : 'Foram encontradas ' + qtd + ' divergência(s). Exporte o Excel para detalhes.';
+        btnExportar.disabled = qtd === 0;
+      } catch (err) {
+        console.error('Erro ao processar:', err);
+        alert('Erro ao processar os Excels. Veja o console.');
+      } finally {
+        btnProcessar.disabled = false;
+      }
+    });
+
+    btnExportar.addEventListener('click', function () {
+      if (!ultimasDivergencias || !ultimasDivergencias.total) return;
+      var wb = XLSX.utils.book_new();
+
+      function nomeAbaSeguro(nome) {
+        var n = String(nome || '').trim() || 'Aba';
+        n = n.replace(/[\[\]\:\*\?\/\\]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!n) n = 'Aba';
+        return n.length <= 31 ? n : n.slice(0, 31);
+      }
+
+      // Aba única: Notas Omissas
+      if (ultimasDivergencias.omissas && ultimasDivergencias.omissas.length) {
+        var wsO = XLSX.utils.json_to_sheet(ultimasDivergencias.omissas);
+        XLSX.utils.book_append_sheet(wb, wsO, nomeAbaSeguro('Notas Omissas'));
+      }
+
+      // Abas por relatório de entrada (Empresa 1, Empresa 2...) usando a linha 2 (C..U) para identificar
+      var entradas = (ultimasDivergencias.entradas || []).slice();
+      entradas.forEach(function (ent) {
+        var linhas = (ultimasDivergencias.porEntrada && ultimasDivergencias.porEntrada[ent.id]) ? ultimasDivergencias.porEntrada[ent.id] : [];
+        if (!linhas || !linhas.length) return;
+        var nomeEmpresa = String(ent.empresa || '').trim();
+        var nomeAba = nomeEmpresa ? (ent.id + ' - ' + nomeEmpresa) : ent.id;
+        var ws = XLSX.utils.json_to_sheet(linhas);
+        XLSX.utils.book_append_sheet(wb, ws, nomeAbaSeguro(nomeAba));
+      });
+
+      var nomeArquivo = 'divergencias_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      XLSX.writeFile(wb, nomeArquivo);
+    });
+  </script>
+</body>
+</html>

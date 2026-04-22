@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparativo Tributário - Reforma Tributária</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <div class="brand-topbar">
+      <img src="../assets/logo-analise-group.png" alt="Logo da Análise Group">
+      <span>Análise Group</span>
+    </div>
+    <a class="home-button" href="../../index.html">
+      <span class="icon">&#8962;</span>
+      <span>Menu Inicial</span>
+    </a>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Simulador gerencial com base técnica</p>
+        <h1>Comparativo Tributário - Reforma Tributária</h1>
+        <p class="hero-text">
+          Compare os cenários de <strong>Simples Nacional puro</strong>,
+          <strong>Simples híbrido</strong> e <strong>Lucro Presumido</strong>,
+          com memória das premissas utilizadas no cálculo.
+        </p>
+      </div>
+      <div class="notice">
+        <strong>Atenção</strong>
+        <p>
+          Esta versão é um simulador gerencial. Valide as premissas legais e os percentuais
+          da operação antes de usar como base oficial de apuração.
+        </p>
+      </div>
+    </header>
+
+    <section class="layout">
+      <form id="simulador-form" class="panel form-panel">
+        <section class="group">
+          <h2>1. Dados gerais</h2>
+          <div class="grid cols-2">
+            <label>
+              Empresa
+              <input type="text" id="empresa" placeholder="Ex.: Empresa Exemplo Ltda">
+            </label>
+            <label>
+              Segmento
+              <select id="segmento">
+                <option value="comercio">Comércio</option>
+                <option value="industria">Indústria</option>
+                <option value="industria-comercio">Indústria + Comércio</option>
+                <option value="comercio-servico">Comércio + Serviço</option>
+                <option value="industria-servico">Indústria + Serviço</option>
+                <option value="industria-comercio-servico">Indústria + Comércio + Serviço</option>
+                <option value="servico" selected>Serviço</option>
+              </select>
+            </label>
+            <label>
+              Atividade principal
+              <input type="text" id="atividade" placeholder="Ex.: consultoria tributária">
+            </label>
+            <label>
+              Perfil do cliente
+              <select id="perfilCliente">
+                <option value="final">Consumidor final</option>
+                <option value="b2b" selected>Empresas</option>
+                <option value="misto">Misto</option>
+              </select>
+            </label>
+            <label>
+              Cliente aproveita crédito?
+              <select id="clienteCredito">
+                <option value="nao">Não</option>
+                <option value="parcial">Parcialmente</option>
+                <option value="sim" selected>Sim</option>
+              </select>
+            </label>
+            <label>
+              Custo contábil adicional mensal
+              <input type="number" id="custoContabil" min="0" step="0.01" value="0">
+            </label>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>2. Receitas e bases</h2>
+          <div class="grid cols-3">
+            <label>
+              RBT12
+              <input type="number" id="rbt12" min="0" step="0.01" value="1200000">
+            </label>
+            <label>
+              Faturamento mensal
+              <input type="number" id="faturamentoMensal" min="0" step="0.01" value="100000">
+            </label>
+            <label>
+              Folha mensal
+              <input type="number" id="folhaMensal" min="0" step="0.01" value="15000">
+            </label>
+            <label>
+              Folha 12 meses
+              <input type="number" id="folha12Meses" min="0" step="0.01" value="180000">
+            </label>
+            <label>
+              Receita tributável IBS/CBS
+              <input type="number" id="receitaTributavel" min="0" step="0.01" value="100000">
+            </label>
+            <label>
+              Receita não tributável
+              <input type="number" id="receitaNaoTributavel" min="0" step="0.01" value="0">
+            </label>
+            <label>
+              Benefício comercial estimado por gerar crédito
+              <input type="number" id="beneficioComercial" min="0" step="0.01" value="0">
+            </label>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>3. Simples Nacional</h2>
+          <div class="grid cols-3">
+            <label>
+              Anexo
+              <select id="anexoSimples">
+                <option value="I">Anexo I - Comércio</option>
+                <option value="II">Anexo II - Indústria</option>
+                <option value="III" selected>Anexo III - Serviços</option>
+                <option value="IV">Anexo IV - Serviços com INSS por fora</option>
+                <option value="V">Anexo V - Serviços sujeitos ao Fator R</option>
+              </select>
+            </label>
+            <label>
+              Faixa
+              <select id="faixaSimples">
+                <option value="1">Faixa 1</option>
+                <option value="2">Faixa 2</option>
+                <option value="3">Faixa 3</option>
+                <option value="4" selected>Faixa 4</option>
+                <option value="5">Faixa 5</option>
+                <option value="6">Faixa 6</option>
+              </select>
+            </label>
+            <label>
+              Alíquota nominal (%)
+              <input type="number" id="aliquotaNominal" min="0" step="0.01" value="16">
+            </label>
+            <label>
+              Parcela a deduzir
+              <input type="number" id="parcelaDeduzir" min="0" step="0.01" value="35640">
+            </label>
+            <div class="helper-card">
+              <strong>Automação do Simples</strong>
+              <p id="statusFaixaAutomatica">
+                Em modo manual, você pode informar faixa, alíquota e parcela a deduzir livremente.
+              </p>
+            </div>
+            <label>
+              Fator R (%) informado manualmente
+              <input type="number" id="fatorR" min="0" step="0.01" placeholder="Ex.: 35">
+            </label>
+            <label>
+              Observação do cenário
+              <input type="text" id="observacao" placeholder="Ex.: premissa conservadora de créditos">
+            </label>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>4. Repartição do Simples no cenário híbrido</h2>
+          <p class="group-text">
+            Você pode trabalhar em modo manual ou automático. Nesta versão, a automação já está
+            parametrizada para os Anexos I, II, III, IV e V, mantendo o preenchimento manual disponível.
+          </p>
+          <div class="grid cols-2">
+            <label>
+              Modo de repartição
+              <select id="modoReparticao">
+                <option value="manual" selected>Manual</option>
+                <option value="automatico">Automático pelo Anexo I, II, III, IV e V</option>
+              </select>
+            </label>
+            <div class="helper-card">
+              <strong>Status atual</strong>
+              <p id="statusReparticao">
+                Os percentuais abaixo serão usados manualmente no cálculo do cenário híbrido.
+              </p>
+            </div>
+          </div>
+          <div class="grid cols-3 top-space">
+            <label>
+              % IRPJ no DAS
+              <input type="number" id="percentualIRPJ" min="0" max="100" step="0.01" value="4">
+            </label>
+            <label>
+              % CSLL no DAS
+              <input type="number" id="percentualCSLL" min="0" max="100" step="0.01" value="3.5">
+            </label>
+            <label>
+              % CPP no DAS
+              <input type="number" id="percentualCPP" min="0" max="100" step="0.01" value="28">
+            </label>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>5. IBS e CBS no regime regular</h2>
+          <div class="grid cols-3">
+            <label>
+              Alíquota IBS (%)
+              <input type="number" id="aliquotaIBS" min="0" step="0.01" value="18">
+            </label>
+            <label>
+              Alíquota CBS (%)
+              <input type="number" id="aliquotaCBS" min="0" step="0.01" value="8.8">
+            </label>
+            <label>
+              % redução base IBS
+              <input type="number" id="reducaoBaseIBS" min="0" max="100" step="0.01" value="0">
+            </label>
+            <label>
+              % redução base CBS
+              <input type="number" id="reducaoBaseCBS" min="0" max="100" step="0.01" value="0">
+            </label>
+            <label>
+              Base de débito IBS
+              <input type="number" id="baseDebitoIBS" min="0" step="0.01" value="100000">
+            </label>
+            <label>
+              Base de débito CBS
+              <input type="number" id="baseDebitoCBS" min="0" step="0.01" value="100000">
+            </label>
+            <label>
+              Base de crédito IBS
+              <input type="number" id="baseCreditoIBS" min="0" step="0.01" value="27777.78">
+            </label>
+            <label>
+              Base de crédito CBS
+              <input type="number" id="baseCreditoCBS" min="0" step="0.01" value="22727.27">
+            </label>
+            <label>
+              Crédito IBS calculado
+              <input type="number" id="creditoIBS" min="0" step="0.01" value="5000" readonly>
+            </label>
+            <label>
+              Crédito CBS calculado
+              <input type="number" id="creditoCBS" min="0" step="0.01" value="2000" readonly>
+            </label>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>6. Lucro Presumido</h2>
+          <div class="grid cols-3">
+            <label>
+              % Presunção IRPJ
+              <input type="number" id="percentualPresuncaoIRPJ" min="0" step="0.01" value="32">
+            </label>
+            <label>
+              % Presunção CSLL
+              <input type="number" id="percentualPresuncaoCSLL" min="0" step="0.01" value="32">
+            </label>
+            <label>
+              Alíquota CPP no Presumido (%)
+              <input type="number" id="aliquotaCPPPresumido" min="0" step="0.01" value="20">
+            </label>
+            <label>
+              Adicional mensal estimado de IRPJ
+              <input type="number" id="adicionalIRPJ" min="0" step="0.01" value="0">
+            </label>
+            <label>
+              Outras incidências mensais
+              <input type="number" id="outrasIncidencias" min="0" step="0.01" value="0">
+            </label>
+            <label>
+              Complexidade operacional
+              <select id="complexidade">
+                <option value="baixa">Baixa</option>
+                <option value="media" selected>Média</option>
+                <option value="alta">Alta</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit">Calcular comparativo</button>
+          <button type="button" class="secondary-button" id="imprimirRelatorio">Imprimir relatório</button>
+          <button type="reset" class="ghost-button" id="limparFormulario">Limpar</button>
+        </div>
+      </form>
+
+      <section class="panel results-panel">
+        <div class="cards">
+          <article class="card">
+            <span class="card-label">Simples puro</span>
+            <strong id="resultadoSimples">R$ 0,00</strong>
+            <small id="resultadoSimplesInfo">DAS estimado do mês</small>
+          </article>
+          <article class="card">
+            <span class="card-label">Simples híbrido</span>
+            <strong id="resultadoHibrido">R$ 0,00</strong>
+            <small id="resultadoHibridoInfo">Simples parcial + IBS/CBS regular</small>
+          </article>
+          <article class="card">
+            <span class="card-label">Lucro Presumido</span>
+            <strong id="resultadoPresumido">R$ 0,00</strong>
+            <small id="resultadoPresumidoInfo">IRPJ + CSLL + CPP + IBS/CBS</small>
+          </article>
+        </div>
+
+        <section class="summary">
+          <h2>Resultado final</h2>
+          <div class="summary-grid">
+            <div>
+              <span>Melhor cenário financeiro</span>
+              <strong id="melhorFinanceiro">-</strong>
+            </div>
+            <div>
+              <span>Melhor cenário operacional</span>
+              <strong id="melhorOperacional">-</strong>
+            </div>
+            <div>
+              <span>Diferença híbrido x simples</span>
+              <strong id="diferencaHibrido">R$ 0,00</strong>
+            </div>
+            <div>
+              <span>Diferença presumido x simples</span>
+              <strong id="diferencaPresumido">R$ 0,00</strong>
+            </div>
+            <div>
+              <span>Total anual do melhor cenário</span>
+              <strong id="melhorAnual">R$ 0,00</strong>
+            </div>
+            <div>
+              <span>Método da repartição</span>
+              <strong id="metodoReparticaoResultado">Manual</strong>
+            </div>
+          </div>
+          <div class="parecer">
+            <h3>Parecer</h3>
+            <p id="parecerFinal">
+              Preencha os campos e clique em calcular para gerar o comparativo.
+            </p>
+          </div>
+        </section>
+
+        <section class="breakdown">
+          <h2>Memória de cálculo</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="memoriaCalculo">
+              <tr>
+                <td>Alíquota efetiva do Simples</td>
+                <td>0,00%</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="breakdown">
+          <h2>Comparativo mensal e anual</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Cenário</th>
+                <th>Total mensal</th>
+                <th>Total anual</th>
+              </tr>
+            </thead>
+            <tbody id="comparativoCenarios">
+              <tr>
+                <td>Simples puro</td>
+                <td>R$ 0,00</td>
+                <td>R$ 0,00</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="premissas">
+          <h2>Premissas do cálculo</h2>
+          <ul id="listaPremissas">
+            <li>As premissas aparecerão aqui após o cálculo.</li>
+          </ul>
+        </section>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

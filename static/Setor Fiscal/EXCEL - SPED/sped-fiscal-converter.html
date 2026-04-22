@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPED Fiscal – Conversor TXT ↔ Excel</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --azul: #111111;
+      --verde: #e9af29;
+      --cinza: #0b0b0b;
+      --borda: #2f2a22;
+      --texto: #f5f1e8;
+      --erro: #b42318;
+      --aviso: #f0ba42;
+      --ok: #89d47d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--texto);
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.16), transparent 24%),
+        var(--cinza);
+    }
+
+    header {
+      background: linear-gradient(135deg, rgba(0,0,0,0.98) 0%, rgba(17,17,17,0.94) 62%, rgba(233,175,41,0.84) 100%);
+      color: #fff;
+      padding: 24px 16px;
+      border-bottom: 1px solid rgba(233,175,41,0.24);
+    }
+
+    .header-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .header-wrap h1 {
+      margin: 0 0 8px;
+      font-size: 1.65rem;
+    }
+
+    .header-wrap p {
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .brand-topbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 8px 14px 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .brand-topbar img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(233,175,41,0.2));
+    }
+
+    .brand-topbar span {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .home-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #fff7df;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .home-button .icon {
+      color: var(--verde);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 20px auto 28px;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+    }
+
+    .drop-zone {
+      border: 2px dashed #8da0bd;
+      border-radius: 12px;
+      min-height: 180px;
+      background: #171717;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 18px;
+      user-select: none;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--verde);
+      background: #1d1a14;
+      transform: translateY(-1px);
+    }
+
+    .drop-zone.processing {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .drop-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .file-info {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      color: var(--muted, #b7ae9f);
+    }
+
+    .progress-card[hidden],
+    .preview-card[hidden],
+    .download-card[hidden] {
+      display: none;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      border-radius: 8px;
+      background: #1e1e1e;
+      overflow: hidden;
+      border: 1px solid var(--borda);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #e9af29, #f0ba42);
+      transition: width 0.16s linear;
+    }
+
+    .progress-message {
+      margin-top: 10px;
+      color: #d7c9b3;
+      font-size: 0.95rem;
+    }
+
+    .status-area {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-item {
+      border: 1px solid var(--borda);
+      border-left-width: 4px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      background: #171717;
+    }
+
+    .status-item.info {
+      border-left-color: #2f6cce;
+    }
+
+    .status-item.warning {
+      border-left-color: var(--aviso);
+      background: #1f1910;
+    }
+
+    .status-item.error {
+      border-left-color: var(--erro);
+      color: var(--erro);
+      background: #fff2f1;
+    }
+
+    .status-item.success {
+      border-left-color: var(--ok);
+      color: var(--ok);
+      background: #132013;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+
+    thead th {
+      text-align: left;
+      background: #1b1b1b;
+      color: #f3cb70;
+      padding: 10px;
+      border: 1px solid #d6deea;
+    }
+
+    tbody td {
+      padding: 9px 10px;
+      border: 1px solid #e0e5ed;
+      background: #141414;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #181818;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 12px 18px;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .download-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .download-meta {
+      margin-top: 10px;
+      color: #d7c9b3;
+      font-size: 0.95rem;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: #51617e;
+    }
+
+    .mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .mode-tabs .tab {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #ccd6e6;
+      background: #f0f4fa;
+      color: #1a2b4a;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .mode-tabs .tab:hover {
+      border-color: #2e7d32;
+      background: #e8f5e9;
+    }
+
+    .mode-tabs .tab.active {
+      background: #1a2b4a;
+      color: #fff;
+      border-color: #1a2b4a;
+      box-shadow: 0 2px 10px rgba(26, 43, 74, 0.22);
+    }
+
+    .mode-tabs .tab:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .download-btn.secondary {
+      background: #2f55a6;
+    }
+
+    .download-btn.secondary:hover {
+      filter: brightness(1.06);
+    }
+
+    footer {
+      margin-top: 26px;
+      border-top: 1px solid var(--borda);
+      padding: 16px;
+      text-align: center;
+      color: #3b4b67;
+      background: #fff;
+      font-size: 0.93rem;
+    }
+
+    footer a {
+      color: #1b4aa8;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 780px) {
+      .header-wrap h1 {
+        font-size: 1.3rem;
+      }
+
+      .drop-zone {
+        min-height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <div class="brand-topbar">
+        <img src="../assets/logo-analise-group.png" alt="Logo da Análise Group">
+        <span>Análise Group</span>
+      </div>
+      <a class="home-button" href="../../index.html">
+        <span class="icon">&#8962;</span>
+        <span>Menu Inicial</span>
+      </a>
+      <h1>SPED Fiscal – Conversor TXT ↔ Excel</h1>
+      <p>Conversao client-side de EFD ICMS/IPI: TXT para .xlsx e .xlsx para TXT, sem envio de dados para servidor.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="mode-tabs" role="tablist" aria-label="Modo de conversao">
+        <button type="button" class="tab active" id="tabTxtToXlsx" data-panel="panelTxtToExcel" role="tab" aria-selected="true">TXT → Excel</button>
+        <button type="button" class="tab" id="tabXlsxToTxt" data-panel="panelExcelToTxt" role="tab" aria-selected="false">Excel → TXT</button>
+      </div>
+      <p class="small" style="margin: 10px 0 0;">Layout compatível com planilhas <strong>REDE / EfdIcmsIpi</strong>: em cada aba as colunas de contexto e do registro vêm primeiro; a última coluna é <strong>__ORDEM</strong> (texto, posição global no TXT), necessária para Excel→TXT e para manter <strong>C191</strong> após o <strong>C190</strong> certo. Campos de data (DDMMYYYY no TXT) são gravados como <strong>número serial</strong> do Excel, como no modelo REDE. Não renumere __ORDEM por aba.</p>
+    </section>
+
+    <div id="panelTxtToExcel">
+      <section class="card">
+        <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Selecionar arquivo TXT">
+          <div class="drop-icon">📄</div>
+          <div><strong>Arraste o arquivo .TXT do SPED Fiscal aqui ou clique para selecionar</strong></div>
+          <div class="small">Formato esperado: registros no padrao |REG|campo1|campo2|...|</div>
+        </div>
+        <input id="fileInput" type="file" accept=".txt" hidden>
+        <div id="fileInfo" class="file-info">Nenhum arquivo selecionado.</div>
+      </section>
+
+      <section id="progressCard" class="card progress-card" hidden>
+        <div class="progress-top">
+          <span>Progresso da conversao</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <div id="progressMessage" class="progress-message">Aguardando arquivo...</div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin: 0 0 12px; font-size: 1.15rem; color: #23385f;">Status</h2>
+        <div id="statusArea" class="status-area"></div>
+      </section>
+
+      <section id="previewCard" class="card preview-card" hidden>
+        <h2 style="margin: 0 0 12px; font-size: 1.15rem; color: #23385f;">Preview das abas</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Aba</th>
+              <th>Nome do Registro</th>
+              <th>Qtd. Linhas</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </section>
+
+      <section id="downloadCard" class="card download-card" hidden>
+        <button id="downloadBtn" class="download-btn" type="button">⬇ Baixar Excel (.xlsx)</button>
+        <div id="downloadMeta" class="download-meta"></div>
+      </section>
+    </div>
+
+    <div id="panelExcelToTxt" hidden>
+      <section class="card">
+        <div id="dropZoneXlsx" class="drop-zone" role="button" tabindex="0" aria-label="Selecionar arquivo Excel">
+          <div class="drop-icon">📊</div>
+          <div><strong>Arraste o arquivo .XLSX aqui ou clique para selecionar</strong></div>
+          <div class="small">Recomendado: coluna __ORDEM na ultima coluna (ou equivalentes; ver erro). Planilhas antigas com __ORDEM na primeira coluna ainda sao aceitas. Sem ordem global, marque a opcao abaixo. Saida: Latin-1, CRLF.</div>
+        </div>
+        <input id="fileInputXlsx" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <div id="fileInfoXlsx" class="file-info">Nenhum arquivo selecionado.</div>
+        <label class="small" style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; cursor: pointer; line-height: 1.4;">
+          <input id="allowSyntheticOrderXlsx" type="checkbox" style="margin-top: 2px; flex-shrink: 0;">
+          <span>Planilha <strong>sem</strong> coluna de ordem (__ORDEM / equivalentes): montar o TXT na sequência das abas e das linhas. Útil para .xlsx de outras fontes (ex. REDE 510); o validador SPED pode acusar erro de hierarquia (C100/C190/C191) — o modo seguro continua sendo TXT → Excel aqui → editar → Excel → TXT.</span>
+        </label>
+      </section>
+
+      <section id="progressCardXlsx" class="card progress-card" hidden>
+        <div class="progress-top">
+          <span>Progresso da conversao</span>
+          <span id="progressPercentXlsx">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progressBarXlsx" class="progress-bar"></div>
+        </div>
+        <div id="progressMessageXlsx" class="progress-message">Aguardando arquivo...</div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin: 0 0 12px; font-size: 1.15rem; color: #23385f;">Status (Excel → TXT)</h2>
+        <div id="statusAreaXlsx" class="status-area"></div>
+      </section>
+
+      <section id="previewCardXlsx" class="card preview-card" hidden>
+        <h2 style="margin: 0 0 12px; font-size: 1.15rem; color: #23385f;">Abas lidas e linhas geradas</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Aba</th>
+              <th>Nome do Registro</th>
+              <th>Linhas no TXT</th>
+            </tr>
+          </thead>
+          <tbody id="previewBodyXlsx"></tbody>
+        </table>
+      </section>
+
+      <section id="downloadCardXlsx" class="card download-card" hidden>
+        <button id="downloadTxtBtn" class="download-btn secondary" type="button">⬇ Baixar SPED (.txt)</button>
+        <div id="downloadMetaXlsx" class="download-meta"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    Desenvolvido para conversao de EFD ICMS/IPI - Layout versao 17 (2023).<br>
+    <a href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/sped-sistema-publico-de-escrituracao-digital" target="_blank" rel="noopener noreferrer">Manual do SPED (Receita Federal)</a>
+  </footer>
+
+  <script>
+    const SPED_SCHEMA = {
+      // BLOCO 0
+      "0000": ["REG", "COD_VER", "COD_FIN", "DT_INI", "DT_FIN", "NOME", "CNPJ", "CPF", "UF", "IE", "COD_MUN", "IM", "SUFRAMA", "IND_PERFIL", "IND_ATIV"],
+      "0001": ["REG", "IND_MOV"],
+      "0005": ["REG", "FANTASIA", "CEP", "END", "NUM", "COMPL", "BAIRRO", "FONE", "FAX", "EMAIL"],
+      "0100": ["REG", "NOME", "CPF", "CRC", "CNPJ", "CEP", "END", "NUM", "COMPL", "BAIRRO", "FONE", "FAX", "EMAIL", "COD_MUN"],
+      "0150": ["REG", "COD_PART", "NOME", "COD_PAIS", "CNPJ", "CPF", "IE", "COD_MUN", "SUFRAMA", "END", "NUM", "COMPL", "BAIRRO"],
+      "0190": ["REG", "UNID", "DESCR"],
+      "0200": ["REG", "COD_ITEM", "DESCR_ITEM", "COD_BARRA", "COD_ANT_ITEM", "UNID_INV", "TIPO_ITEM", "COD_NCM", "EX_IPI", "COD_GEN", "COD_LST", "ALIQ_ICMS", "CEST"],
+      "0205": ["REG", "DESCR_ANT_ITEM", "DT_INI", "DT_FIM", "COD_ANT_ITEM"],
+      "0400": ["REG", "COD_NAT", "DESCR_NAT"],
+      "0450": ["REG", "COD_INF", "TXT"],
+      "0460": ["REG", "COD_OBS", "TXT"],
+      "0990": ["REG", "QTD_LIN_0"],
+
+      // BLOCO B
+      "B001": ["REG", "IND_DAD"],
+      "B990": ["REG", "QTD_LIN_B"],
+
+      // BLOCO C
+      "C001": ["REG", "IND_MOV"],
+      "C100": ["REG", "IND_OPER", "IND_EMIT", "COD_PART", "COD_MOD", "COD_SIT", "SER", "NUM_DOC", "CHV_NFE", "DT_DOC", "DT_E_S", "VL_DOC", "IND_PGTO", "VL_DESC", "VL_ABAT_NT", "VL_MERC", "IND_FRT", "VL_FRT", "VL_SEG", "VL_OUT_DA", "VL_BC_ICMS", "VL_ICMS", "VL_BC_ICMS_ST", "VL_ICMS_ST", "VL_IPI", "VL_PIS", "VL_COFINS", "VL_PIS_ST", "VL_COFINS_ST"],
+      "C110": ["REG", "COD_INF", "TXT_COMPL"],
+      "C113": ["REG", "IND_OPER", "IND_EMIT", "COD_PART", "COD_MOD", "SER", "SUB", "NUM_DOC", "DT_DOC", "CHV_DOCe"],
+      "C170": ["REG", "NUM_ITEM", "COD_ITEM", "DESCR_COMPL", "QTD", "UNID", "VL_ITEM", "VL_DESC", "IND_MOV", "CST_ICMS", "CFOP", "COD_NAT", "VL_BC_ICMS", "ALIQ_ICMS", "VL_ICMS", "VL_BC_ICMS_ST", "ALIQ_ST", "VL_ICMS_ST", "IND_APUR", "CST_IPI", "COD_ENQ", "VL_BC_IPI", "ALIQ_IPI", "VL_IPI", "CST_PIS", "VL_BC_PIS", "ALIQ_PIS", "QUANT_BC_PIS", "ALIQ_PIS_QUANT", "VL_PIS", "CST_COFINS", "VL_BC_COFINS", "ALIQ_COFINS", "QUANT_BC_COFINS", "ALIQ_COFINS_QUANT", "VL_COFINS", "COD_CTA", "VL_ABAT_NT"],
+      "C190": ["REG", "CST_ICMS", "CFOP", "ALIQ_ICMS", "VL_OPR", "VL_BC_ICMS", "VL_ICMS", "VL_BC_ICMS_ST", "VL_ICMS_ST", "VL_RED_BC", "VL_IPI", "COD_OBS"],
+      "C191": ["REG", "VL_FCP_OP", "VL_FCP_ST", "VL_FCP_RET"],
+      "C195": ["REG", "COD_OBS", "TXT_COMPL"],
+      "C500": ["REG", "IND_OPER", "IND_EMIT", "COD_PART", "COD_MOD", "COD_SIT", "SER", "SUB", "COD_CONS", "NUM_DOC", "DT_DOC", "DT_E_S", "VL_DOC", "VL_DESC", "VL_FORN", "VL_SERV_NT", "VL_TERC", "VL_DA", "VL_BC_ICMS", "VL_ICMS", "VL_BC_ICMS_ST", "VL_ICMS_ST", "COD_INF", "VL_PIS", "VL_COFINS", "TP_LIGACAO", "COD_GRUPO_TENSAO", "CHV_DOCe", "FIN_DOCe", "CHV_DOCe_REF", "IND_DEST", "COD_MUN_DEST", "COD_CTA", "COD_MOD_DOC_REF", "HASH_DOC_REF", "SER_DOC_REF", "NUM_DOC_REF", "MES_DOC_REF", "ENER_INJET", "OUTRAS_DED"],
+      "C590": ["REG", "CST_ICMS", "CFOP", "ALIQ_ICMS", "VL_OPR", "VL_BC_ICMS", "VL_ICMS", "VL_BC_ICMS_ST", "VL_ICMS_ST", "VL_RED_BC", "COD_OBS"],
+      "C990": ["REG", "QTD_LIN_C"],
+
+      // BLOCO D
+      "D001": ["REG", "IND_MOV"],
+      "D990": ["REG", "QTD_LIN_D"],
+
+      // BLOCO E
+      "E001": ["REG", "IND_MOV"],
+      "E100": ["REG", "DT_INI", "DT_FIN"],
+      "E110": ["REG", "VL_TOT_DEBITOS", "VL_AJ_DEBITOS", "VL_TOT_AJ_DEBITOS", "VL_ESTORNOS_CRED", "VL_TOT_CREDITOS", "VL_AJ_CREDITOS", "VL_TOT_AJ_CREDITOS", "VL_ESTORNOS_DEB", "VL_SLD_CREDOR_ANT", "VL_SLD_APURADO", "VL_TOT_DED", "VL_ICMS_RECOLHER", "VL_SLD_CREDOR_TRANSPORTAR", "DEB_ESP"],
+      "E111": ["REG", "COD_AJ_APUR", "DESCR_COMPL_AJ", "VL_AJ_APUR"],
+      "E116": ["REG", "COD_OR", "VL_OR", "DT_VCTO", "COD_REC", "NUM_PROC", "IND_PROC", "PROC", "TXT_COMPL", "MES_REF"],
+      "E990": ["REG", "QTD_LIN_E"],
+
+      // BLOCO G
+      "G001": ["REG", "IND_MOV"],
+      "G990": ["REG", "QTD_LIN_G"],
+
+      // BLOCO H
+      "H001": ["REG", "IND_MOV"],
+      "H005": ["REG", "DT_INV", "VL_INV", "MOT_INV"],
+      "H010": ["REG", "COD_ITEM", "UNID", "QTD", "VL_UNIT", "VL_ITEM", "IND_PROP", "COD_PART", "TXT_COMPL", "COD_CTA", "VL_ITEM_IR"],
+      "H990": ["REG", "QTD_LIN_H"],
+
+      // BLOCO K
+      "K001": ["REG", "IND_MOV"],
+      "K990": ["REG", "QTD_LIN_K"],
+
+      // BLOCO 1
+      "1001": ["REG", "IND_MOV"],
+      "1010": ["REG", "IND_EXP", "IND_CCRF", "IND_COMB", "IND_USINA", "IND_VA", "IND_EE", "IND_CART", "IND_FORM", "IND_AER", "IND_GIAF1", "IND_GIAF3", "IND_GIAF4", "IND_REST_RESSARC_COMPL_ICMS"],
+      "1990": ["REG", "QTD_LIN_1"],
+
+      // BLOCO 9
+      "9001": ["REG", "IND_MOV"],
+      "9900": ["REG", "REG_BLC", "QTD_REG_BLC"],
+      "9990": ["REG", "QTD_LIN_9"],
+      "9999": ["REG", "QTD_LIN"]
+    };
+
+    const CONTEXT_COLUMNS = {
+      "0000": [],
+
+      // Contexto apenas de 0000
+      "0001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0005": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0100": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0150": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0190": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0200": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0400": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0450": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0460": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "0990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "B001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "B990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "C001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "C100": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "C500": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "C990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "D001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "D990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "E001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "E990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "G001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "G990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "H001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "H990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "K001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "K990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "1001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "1990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "9001": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "9900": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "9990": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "9999": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+
+      // Contexto de 0000 + pai imediato
+      "0205": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["0200", "COD_ITEM"]],
+      "H005": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]],
+      "H010": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["H005", "REG"], ["H005", "DT_INV"]],
+      "E100": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["E001", "REG"], ["E001", "IND_MOV"]],
+
+      // Contexto de 0000 + C100
+      "C110": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"]],
+      "C170": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"]],
+      "C190": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"]],
+      "C195": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"]],
+
+      // Contexto de 0000 + C100 + C190
+      "C191": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"], ["C190", "REG"], ["C190", "CST_ICMS"], ["C190", "CFOP"], ["C190", "ALIQ_ICMS"]],
+
+      // Contexto de 0000 + C100 + C110
+      "C113": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C100", "REG"], ["C100", "IND_OPER"], ["C100", "IND_EMIT"], ["C100", "COD_PART"], ["C100", "COD_MOD"], ["C100", "COD_SIT"], ["C100", "SER"], ["C100", "NUM_DOC"], ["C100", "CHV_NFE"], ["C100", "DT_DOC"], ["C100", "DT_E_S"], ["C110", "REG"], ["C110", "COD_INF"]],
+
+      // Contexto de 0000 + C500
+      "C590": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["C500", "REG"], ["C500", "IND_OPER"], ["C500", "IND_EMIT"], ["C500", "COD_PART"], ["C500", "COD_MOD"], ["C500", "COD_SIT"], ["C500", "SER"], ["C500", "SUB"], ["C500", "NUM_DOC"], ["C500", "DT_DOC"]],
+
+      // Contexto de 0000 + E001 + E100
+      "E110": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["E001", "REG"], ["E001", "IND_MOV"], ["E100", "REG"], ["E100", "DT_INI"], ["E100", "DT_FIN"]],
+      "E111": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["E001", "REG"], ["E001", "IND_MOV"], ["E100", "REG"], ["E100", "DT_INI"], ["E100", "DT_FIN"]],
+      "E116": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"], ["E001", "REG"], ["E001", "IND_MOV"], ["E100", "REG"], ["E100", "DT_INI"], ["E100", "DT_FIN"]],
+
+      // Registros de outros blocos sem filhos
+      "1010": [["0000", "REG"], ["0000", "DT_INI"], ["0000", "DT_FIN"], ["0000", "CNPJ"]]
+    };
+
+    const SHEET_ORDER = [
+      "0000", "0001", "0005", "0100", "0150", "0190", "0200", "0205",
+      "0400", "0450", "0460", "0990", "B001", "B990", "C001", "C100", "C110", "C113",
+      "C170", "C190", "C191", "C195", "C500", "C590", "C990", "D001", "D990", "E001",
+      "E100", "E110", "E111", "E116", "E990", "G001", "G990", "H001", "H005", "H010",
+      "H990", "K001", "K990", "1001", "1010", "1990", "9001", "9900", "9990", "9999"
+    ];
+
+    /** Campos de data / competencia para normalizacao TXT (DDMMYYYY / MMYYYY). */
+    const SPED_DATE_FIELDS = (function buildDateFields() {
+      const set = new Set();
+      for (const cols of Object.values(SPED_SCHEMA)) {
+        for (const name of cols) {
+          if (/^DT_/i.test(name) || name === "MES_REF" || name === "MES_DOC_REF") {
+            set.add(name);
+          }
+        }
+      }
+      return set;
+    })();
+
+    const REGISTRY_NAMES = {
+      "0000": "Abertura do Arquivo",
+      "0001": "Abertura do Bloco 0",
+      "0005": "Dados Complementares da Entidade",
+      "0100": "Dados do Contabilista",
+      "0150": "Tabela de Cadastro do Participante",
+      "0190": "Tabela de Unidade de Medida",
+      "0200": "Tabela de Identificacao do Item",
+      "0205": "Alteracao do Item",
+      "0400": "Tabela de Natureza da Operacao",
+      "0450": "Tabela de Informacao Complementar",
+      "0460": "Tabela de Observacoes",
+      "0990": "Encerramento do Bloco 0",
+      "B001": "Abertura do Bloco B",
+      "B990": "Encerramento do Bloco B",
+      "C001": "Abertura do Bloco C",
+      "C100": "Documento Fiscal",
+      "C110": "Informacao Complementar do Documento",
+      "C113": "Documento Fiscal Referenciado",
+      "C170": "Itens do Documento Fiscal",
+      "C190": "Analitico de ICMS",
+      "C191": "Fundo de Combate a Pobreza",
+      "C195": "Observacao de Lancamento Fiscal",
+      "C500": "Nota Fiscal de Energia/Comunicacao",
+      "C590": "Analitico de Energia/Comunicacao",
+      "C990": "Encerramento do Bloco C",
+      "D001": "Abertura do Bloco D",
+      "D990": "Encerramento do Bloco D",
+      "E001": "Abertura do Bloco E",
+      "E100": "Periodo da Apuracao",
+      "E110": "Apuracao ICMS",
+      "E111": "Ajuste da Apuracao",
+      "E116": "Obrigacoes a Recolher",
+      "E990": "Encerramento do Bloco E",
+      "G001": "Abertura do Bloco G",
+      "G990": "Encerramento do Bloco G",
+      "H001": "Abertura do Bloco H",
+      "H005": "Totais do Inventario",
+      "H010": "Itens do Inventario",
+      "H990": "Encerramento do Bloco H",
+      "K001": "Abertura do Bloco K",
+      "K990": "Encerramento do Bloco K",
+      "1001": "Abertura do Bloco 1",
+      "1010": "Obrigatoriedade de Registros",
+      "1990": "Encerramento do Bloco 1",
+      "9001": "Abertura do Bloco 9",
+      "9900": "Registros do Arquivo",
+      "9990": "Encerramento do Bloco 9",
+      "9999": "Encerramento do Arquivo Digital"
+    };
+
+    const tabTxtToXlsx = document.getElementById("tabTxtToXlsx");
+    const tabXlsxToTxt = document.getElementById("tabXlsxToTxt");
+    const panelTxtToExcel = document.getElementById("panelTxtToExcel");
+    const panelExcelToTxt = document.getElementById("panelExcelToTxt");
+
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileInfo = document.getElementById("fileInfo");
+    const progressCard = document.getElementById("progressCard");
+    const progressBar = document.getElementById("progressBar");
+    const progressPercent = document.getElementById("progressPercent");
+    const progressMessage = document.getElementById("progressMessage");
+    const statusArea = document.getElementById("statusArea");
+    const previewCard = document.getElementById("previewCard");
+    const previewBody = document.getElementById("previewBody");
+    const downloadCard = document.getElementById("downloadCard");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const downloadMeta = document.getElementById("downloadMeta");
+
+    const dropZoneXlsx = document.getElementById("dropZoneXlsx");
+    const fileInputXlsx = document.getElementById("fileInputXlsx");
+    const fileInfoXlsx = document.getElementById("fileInfoXlsx");
+    const progressCardXlsx = document.getElementById("progressCardXlsx");
+    const progressBarXlsx = document.getElementById("progressBarXlsx");
+    const progressPercentXlsx = document.getElementById("progressPercentXlsx");
+    const progressMessageXlsx = document.getElementById("progressMessageXlsx");
+    const statusAreaXlsx = document.getElementById("statusAreaXlsx");
+    const previewCardXlsx = document.getElementById("previewCardXlsx");
+    const previewBodyXlsx = document.getElementById("previewBodyXlsx");
+    const downloadCardXlsx = document.getElementById("downloadCardXlsx");
+    const downloadTxtBtn = document.getElementById("downloadTxtBtn");
+    const downloadMetaXlsx = document.getElementById("downloadMetaXlsx");
+
+    let currentWorkbook = null;
+    let currentFileName = "";
+    let currentMeta = null;
+    let isProcessingTxt = false;
+
+    let currentTxtLatin1Blob = null;
+    let currentTxtFileName = "";
+    let currentXlsxMeta = null;
+    let isProcessingXlsx = false;
+
+    let activeMode = "txt2xlsx";
+
+    addStatus("Aguardando arquivo TXT do SPED Fiscal.", "info", statusArea);
+    addStatus("Aguardando arquivo Excel (.xlsx) gerado ou compativel com este layout.", "info", statusAreaXlsx);
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function addStatus(message, type = "info", target = statusArea) {
+      const item = document.createElement("div");
+      item.className = "status-item " + type;
+      item.textContent = message;
+      target.prepend(item);
+      while (target.children.length > 8) {
+        target.removeChild(target.lastChild);
+      }
+    }
+
+    function updateProgress(percent, message) {
+      progressCard.hidden = false;
+      const bounded = Math.max(0, Math.min(100, percent));
+      progressBar.style.width = bounded + "%";
+      progressPercent.textContent = bounded.toFixed(0) + "%";
+      if (typeof message === "string" && message.length > 0) {
+        progressMessage.textContent = message;
+      }
+    }
+
+    function resetOutputState() {
+      currentWorkbook = null;
+      currentFileName = "";
+      currentMeta = null;
+      previewBody.innerHTML = "";
+      previewCard.hidden = true;
+      downloadCard.hidden = true;
+      downloadMeta.textContent = "";
+    }
+
+    function setBusyStateTxt(active) {
+      isProcessingTxt = active;
+      if (active) {
+        dropZone.classList.add("processing");
+      } else {
+        dropZone.classList.remove("processing");
+      }
+      fileInput.disabled = active;
+      refreshTabDisabledState();
+    }
+
+    function setBusyStateXlsx(active) {
+      isProcessingXlsx = active;
+      if (active) {
+        dropZoneXlsx.classList.add("processing");
+      } else {
+        dropZoneXlsx.classList.remove("processing");
+      }
+      fileInputXlsx.disabled = active;
+      refreshTabDisabledState();
+    }
+
+    function refreshTabDisabledState() {
+      const busy = isProcessingTxt || isProcessingXlsx;
+      tabTxtToXlsx.disabled = busy;
+      tabXlsxToTxt.disabled = busy;
+    }
+
+    function updateProgressXlsx(percent, message) {
+      progressCardXlsx.hidden = false;
+      const bounded = Math.max(0, Math.min(100, percent));
+      progressBarXlsx.style.width = bounded + "%";
+      progressPercentXlsx.textContent = bounded.toFixed(0) + "%";
+      if (typeof message === "string" && message.length > 0) {
+        progressMessageXlsx.textContent = message;
+      }
+    }
+
+    function resetOutputStateXlsx() {
+      currentTxtLatin1Blob = null;
+      currentTxtFileName = "";
+      currentXlsxMeta = null;
+      previewBodyXlsx.innerHTML = "";
+      previewCardXlsx.hidden = true;
+      downloadCardXlsx.hidden = true;
+      downloadMetaXlsx.textContent = "";
+    }
+
+    function switchMode(mode) {
+      activeMode = mode;
+      const isTxt = mode === "txt2xlsx";
+      tabTxtToXlsx.classList.toggle("active", isTxt);
+      tabXlsxToTxt.classList.toggle("active", !isTxt);
+      tabTxtToXlsx.setAttribute("aria-selected", isTxt ? "true" : "false");
+      tabXlsxToTxt.setAttribute("aria-selected", isTxt ? "false" : "true");
+      panelTxtToExcel.hidden = !isTxt;
+      panelExcelToTxt.hidden = isTxt;
+      refreshTabDisabledState();
+    }
+
+    /** Excel serial (dias desde 1899-12-30 UTC) -> string DDMMYYYY */
+    function excelSerialToDDMMYYYY(serial) {
+      if (typeof serial !== "number" || !Number.isFinite(serial)) return "";
+      const utcMs = (serial - 25569) * 86400 * 1000;
+      const d = new Date(utcMs);
+      if (isNaN(d.getTime())) return "";
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const yyyy = String(d.getUTCFullYear());
+      return dd + mm + yyyy;
+    }
+
+    function dateObjectToDDMMYYYY(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return "";
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const yyyy = String(d.getUTCFullYear());
+      return dd + mm + yyyy;
+    }
+
+    /** dd/mm/aaaa ou d/m/aaaa -> DDMMYYYY */
+    function slashDateToSped(raw) {
+      const m = String(raw).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!m) return "";
+      const dd = m[1].padStart(2, "0");
+      const mm = m[2].padStart(2, "0");
+      return dd + mm + m[3];
+    }
+
+    function formatMesRefSped(raw) {
+      const s = String(raw == null ? "" : raw).trim();
+      if (/^\d{6}$/.test(s)) return s;
+      const m = s.match(/^(\d{1,2})\/(\d{4})$/);
+      if (m) return m[1].padStart(2, "0") + m[2];
+      return s;
+    }
+
+    function numberToMaxSafeIntegerString(n) {
+      if (typeof n !== "number" || !Number.isFinite(n)) return "";
+      if (!Number.isInteger(n)) return "";
+      if (Math.abs(n) > Number.MAX_SAFE_INTEGER) return "";
+      return String(n);
+    }
+
+    /**
+     * Casas decimais para campos EFD: monetarios/valoriccos (N com virgula) vs quantidades.
+     * H010 (inventario): QTD, VL_UNIT, VL_ITEM, VL_ITEM_IR ate 3 casas, sem zeros artificiais (ex. 14 nao vira 14,000).
+     * reg: codigo do registro (ex. "H010"); opcional quando nao aplicavel.
+     */
+    function getSpedDecimalPlaces(fieldName, reg) {
+      if (!fieldName) return null;
+      if (reg === "H010") {
+        if (
+          fieldName === "QTD" ||
+          fieldName === "VL_UNIT" ||
+          fieldName === "VL_ITEM" ||
+          fieldName === "VL_ITEM_IR"
+        ) {
+          return 3;
+        }
+      }
+      if (/^QTD_LIN|^QTD_REG_BLC$/i.test(fieldName)) return null;
+      if (fieldName === "QTD") return 4;
+      if (fieldName.indexOf("QUANT_") === 0) return 4;
+      if (fieldName === "VL_UNIT") return 4;
+      if (fieldName === "ALIQ_PIS_QUANT" || fieldName === "ALIQ_COFINS_QUANT") return 4;
+      if (fieldName.indexOf("VL_") === 0) return 2;
+      if (fieldName.indexOf("ALIQ_") === 0) return 2;
+      if (fieldName === "ENER_INJET" || fieldName === "OUTRAS_DED" || fieldName === "DEB_ESP") return 2;
+      return null;
+    }
+
+    /** H010: ate N casas sem completar com zeros se nao existirem (14 nao vira 14,NNN). */
+    function usesH010VariableDecimals(fieldName, reg) {
+      return (
+        reg === "H010" &&
+        (fieldName === "QTD" ||
+          fieldName === "VL_UNIT" ||
+          fieldName === "VL_ITEM" ||
+          fieldName === "VL_ITEM_IR")
+      );
+    }
+
+    function formatFixedDecimalBrazilian(n, places) {
+      if (typeof n !== "number" || !Number.isFinite(n)) return "";
+      const s = n.toFixed(places);
+      if (s === "-0" + "." + "0".repeat(places)) return "0" + "," + "0".repeat(places);
+      return s.replace(".", ",");
+    }
+
+    /** Arredonda no maximo a maxPlaces casas e remove zeros a direita (e virgula sobrando). */
+    function formatMaxDecimalBrazilianNoPadding(n, maxPlaces) {
+      if (typeof n !== "number" || !Number.isFinite(n)) return "";
+      const sign = n < 0 ? "-" : "";
+      const abs = Math.abs(n);
+      let s = abs.toFixed(maxPlaces);
+      s = s.replace(/(\.\d*?)0+$/, "$1");
+      s = s.replace(/\.$/, "");
+      return sign + s.replace(".", ",");
+    }
+
+    /** Interpreta numero ja em texto (BR ou ponto), inclusive lixo de ponto flutuante do Excel. */
+    function parseSpedDecimalString(raw) {
+      let s = String(raw == null ? "" : raw).trim().replace(/\s/g, "");
+      if (!s) return NaN;
+      s = s.replace(/\.(?=\d{3}(\D|$))/g, "");
+      if (s.indexOf(",") >= 0) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      }
+      const n = Number(s);
+      return n;
+    }
+
+    function formatDecimalFieldForSped(fieldName, n, reg) {
+      const places = getSpedDecimalPlaces(fieldName, reg);
+      if (places == null) return "";
+      if (usesH010VariableDecimals(fieldName, reg)) {
+        return formatMaxDecimalBrazilianNoPadding(n, places);
+      }
+      return formatFixedDecimalBrazilian(n, places);
+    }
+
+    /** Fallback generico quando nao ha nome de campo (2 casas). */
+    function formatDecimalForSped(n) {
+      return formatFixedDecimalBrazilian(n, 2);
+    }
+
+    function normalizeDecimalStringForSpedField(fieldName, sIn, reg) {
+      const places = getSpedDecimalPlaces(fieldName, reg);
+      if (places == null || sIn === "") return sIn;
+      const n = parseSpedDecimalString(sIn);
+      if (!Number.isFinite(n)) return sIn;
+      if (usesH010VariableDecimals(fieldName, reg)) {
+        return formatMaxDecimalBrazilianNoPadding(n, places);
+      }
+      return formatFixedDecimalBrazilian(n, places);
+    }
+
+    function normalizeExcelCellForSped(value, fieldName, reg) {
+      if (value === null || value === undefined) return "";
+      if (value instanceof Date) {
+        if (fieldName === "MES_REF" || fieldName === "MES_DOC_REF") {
+          const ddmmyyyy = dateObjectToDDMMYYYY(value);
+          if (ddmmyyyy.length === 8) return ddmmyyyy.slice(2, 8);
+          return "";
+        }
+        return dateObjectToDDMMYYYY(value);
+      }
+      if (typeof value === "number" && Number.isFinite(value)) {
+        if (SPED_DATE_FIELDS.has(fieldName)) {
+          if (fieldName === "MES_REF" || fieldName === "MES_DOC_REF") {
+            const d = excelSerialToDDMMYYYY(value);
+            return d.length === 8 ? d.slice(2, 8) : formatDecimalForSped(value).replace(",", "");
+          }
+          if (value > 20000 && value < 80000) {
+            return excelSerialToDDMMYYYY(value);
+          }
+        }
+        if (fieldName === "CNPJ" || fieldName === "CPF" || fieldName === "CHV_NFE" || fieldName === "CHV_DOCe") {
+          const intStr = numberToMaxSafeIntegerString(Math.trunc(value));
+          if (intStr) {
+            const pad = fieldName === "CPF" ? 11 : fieldName === "CNPJ" ? 14 : 44;
+            if ((fieldName === "CHV_NFE" || fieldName === "CHV_DOCe") && intStr.length < pad) {
+              console.warn("Possivel perda de precisao em " + fieldName + ": valor numerico no Excel.");
+            }
+            if (fieldName === "CNPJ" || fieldName === "CPF") {
+              return intStr.padStart(pad, "0").slice(-pad);
+            }
+            return intStr;
+          }
+          return formatDecimalForSped(value);
+        }
+        const placesNum = getSpedDecimalPlaces(fieldName, reg);
+        if (placesNum != null) {
+          return formatDecimalFieldForSped(fieldName, value, reg);
+        }
+        if (Number.isInteger(value)) return String(value);
+        return formatDecimalForSped(value);
+      }
+      let s = String(value).trim();
+      if (SPED_DATE_FIELDS.has(fieldName)) {
+        if (fieldName === "MES_REF" || fieldName === "MES_DOC_REF") {
+          const slashMes = String(s).match(/^(\d{1,2})\/(\d{4})$/);
+          if (slashMes) return slashMes[1].padStart(2, "0") + slashMes[2];
+        }
+        if (/^\d{8}$/.test(s)) return s;
+        const conv = slashDateToSped(s);
+        if (conv) return conv;
+      }
+      if (fieldName === "CNPJ") {
+        const digits = s.replace(/\D/g, "");
+        if (digits) return digits.padStart(14, "0").slice(-14);
+      }
+      if (fieldName === "CPF") {
+        const digits = s.replace(/\D/g, "");
+        if (digits) return digits.padStart(11, "0").slice(-11);
+      }
+      if (fieldName === "MES_REF" || fieldName === "MES_DOC_REF") {
+        return formatMesRefSped(s);
+      }
+      s = s.replace(/\r\n?|\n/g, " ").trim();
+      const placesStr = getSpedDecimalPlaces(fieldName, reg);
+      if (placesStr != null && s !== "" && /[0-9]/.test(s)) {
+        const n = parseSpedDecimalString(s);
+        if (Number.isFinite(n)) {
+          if (usesH010VariableDecimals(fieldName, reg)) {
+            return formatMaxDecimalBrazilianNoPadding(n, placesStr);
+          }
+          return formatFixedDecimalBrazilian(n, placesStr);
+        }
+      }
+      return s;
+    }
+
+    /**
+     * Chave de comparacao para cabecalhos Excel vs SPED_SCHEMA:
+     * remove BOM, espacos Unicode invisiveis, quebras de linha (celula quebrada em 2 linhas),
+     * todos os espacos ASCII — assim "VL_SLD_CREDOR_TRAN" + linha + "SPORTAR" = VL_SLD_CREDOR_TRANSPORTAR.
+     */
+    function normalizeHeaderCompareKey(s) {
+      return String(s == null ? "" : s)
+        .replace(/\uFEFF/g, "")
+        .replace(/[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\u200C\u200D]/g, "")
+        .replace(/[\r\n\t\v\f]+/g, "")
+        .replace(/\s+/g, "")
+        .toUpperCase();
+    }
+
+    function headerMatchesSchemaAt(headerLabels, ownStart, schema) {
+      const n = schema.length;
+      for (let i = 0; i < n; i += 1) {
+        const cell = headerLabels[ownStart + i];
+        if (normalizeHeaderCompareKey(cell) !== normalizeHeaderCompareKey(schema[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /**
+     * Converte data SPED (DDMMYYYY) para serial Excel (dias apos 30/12/1899), como no modelo REDE.
+     */
+    function spedDdmmyyyyToExcelSerial(ddmmyyyy) {
+      if (!/^\d{8}$/.test(ddmmyyyy)) return null;
+      const day = Number(ddmmyyyy.slice(0, 2));
+      const month = Number(ddmmyyyy.slice(2, 4)) - 1;
+      const year = Number(ddmmyyyy.slice(4, 8));
+      if (month < 0 || month > 11 || day < 1 || day > 31) return null;
+      const utc = Date.UTC(year, month, day);
+      const base = Date.UTC(1899, 11, 30);
+      const d = Math.round((utc - base) / 86400000);
+      if (d < 0 || d > 2958465) return null;
+      return d;
+    }
+
+    /** Nome do campo SPED a partir do titulo da coluna (ex.: 0000-DT_INI -> DT_INI; __ORDEM -> null). */
+    function headerLabelToSpedFieldName(label) {
+      if (label == null || label === "") return null;
+      const t = String(label).trim();
+      if (!t) return null;
+      if (normalizeHeaderCompareKey(t) === normalizeHeaderCompareKey("__ORDEM")) return null;
+      const ix = t.indexOf("-");
+      if (ix < 0) return t;
+      return t.slice(ix + 1);
+    }
+
+    /** Converte celulas DDMMYYYY em numeros seriais nas linhas de dados (linha 0 = cabecalho). */
+    function convertDateStringsToExcelSerialsInSheetAoA(wsData) {
+      if (!wsData || wsData.length < 2) return;
+      const headerRow = wsData[0];
+      for (let r = 1; r < wsData.length; r += 1) {
+        const row = wsData[r];
+        if (!row) continue;
+        const maxC = Math.min(headerRow.length, row.length);
+        for (let c = 0; c < maxC; c += 1) {
+          const field = headerLabelToSpedFieldName(headerRow[c]);
+          if (!field || !SPED_DATE_FIELDS.has(field)) continue;
+          const cell = row[c];
+          if (cell === null || cell === undefined || cell === "") continue;
+          const str = String(cell).trim();
+          if (!/^\d{8}$/.test(str)) continue;
+          const ser = spedDdmmyyyyToExcelSerial(str);
+          if (ser != null) row[c] = ser;
+        }
+      }
+    }
+
+    /**
+     * Encontra a posicao inicial das colunas "proprias" do registro (apos prefixo de contexto).
+     * Ignora __ORDEM na primeira ou ultima coluna (layout REDE ou legado).
+     */
+    function parseHeaderOwnStart(headerRow, reg) {
+      const schema = SPED_SCHEMA[reg];
+      const n = schema.length;
+      let headerLabels = (headerRow || []).map((h) => (h == null ? "" : h));
+      headerLabels = trimTrailingBlankHeaderCells(headerLabels);
+      let indexShift = 0;
+      const ordHead = findOrderColumnIndex(headerLabels);
+      if (ordHead === 0) {
+        headerLabels = headerLabels.slice(1);
+        indexShift = 1;
+      } else if (ordHead > 0 && ordHead === headerLabels.length - 1) {
+        headerLabels = headerLabels.slice(0, -1);
+      }
+      if (headerLabels.length < n) {
+        return { error: "Cabecalho com poucas colunas na aba " + reg + " (esperado pelo menos " + n + ")." };
+      }
+      for (let ownStart = headerLabels.length - n; ownStart >= 0; ownStart -= 1) {
+        if (headerMatchesSchemaAt(headerLabels, ownStart, schema)) {
+          return { ownStart: ownStart + indexShift };
+        }
+      }
+      const esperado = schema.slice(0, 5).join(", ") + (schema.length > 5 ? ", ..." : "");
+      return {
+        error:
+          "Nao foi possivel reconhecer o cabecalho da aba " +
+          reg +
+          ". As ultimas colunas devem coincidir (mesmo nome SPED), permitindo quebra de linha/espacos no Excel. Referencia: " +
+          esperado +
+          "."
+      };
+    }
+
+    /** Alinha todas as linhas ao numero de colunas da area (!ref ou maior linha), evitando cortes no Excel. */
+    function expandAoAFromWorksheet(ws, rows) {
+      if (!rows || rows.length === 0) return rows || [];
+      let maxLen = 0;
+      const ref = ws["!ref"];
+      if (ref) {
+        try {
+          const d = XLSX.utils.decode_range(ref);
+          maxLen = d.e.c - d.s.c + 1;
+        } catch (e) {
+          /* ignorar ref invalido */
+        }
+      }
+      for (let i = 0; i < rows.length; i += 1) {
+        const r = rows[i];
+        if (r && r.length > maxLen) maxLen = r.length;
+      }
+      if (maxLen <= 0) return rows;
+      return rows.map((r) => {
+        const x = (r || []).slice();
+        while (x.length < maxLen) x.push("");
+        return x;
+      });
+    }
+
+    function findHeaderColumnIndex(headerLabels, schemaColumnName) {
+      const want = normalizeHeaderCompareKey(schemaColumnName);
+      for (let i = 0; i < headerLabels.length; i += 1) {
+        if (normalizeHeaderCompareKey(headerLabels[i]) === want) return i;
+      }
+      return -1;
+    }
+
+    /** Nomes aceitos para a coluna de ordem global do TXT (compat. com export de outras ferramentas). */
+    const ORDER_COLUMN_HEADER_ALIASES = [
+      "__ORDEM",
+      "_ORDEM",
+      "ORDEM_TXT",
+      "ORDEMSPED",
+      "ORDEM_SPED",
+      "SEQ_TXT",
+      "SEQ_SPED",
+      "N_LINHA",
+      "LINHA_TXT"
+    ];
+
+    function findOrderColumnIndex(headerLabels) {
+      for (let a = 0; a < ORDER_COLUMN_HEADER_ALIASES.length; a += 1) {
+        const idx = findHeaderColumnIndex(headerLabels, ORDER_COLUMN_HEADER_ALIASES[a]);
+        if (idx >= 0) return idx;
+      }
+      return -1;
+    }
+
+    function parseOrderCellToNumber(cell) {
+      if (cell === null || cell === undefined || cell === "") return NaN;
+      if (cell instanceof Date) return NaN;
+      if (typeof cell === "number" && Number.isFinite(cell)) return Math.trunc(cell);
+      const s = String(cell).trim().replace(",", ".");
+      if (s === "") return NaN;
+      const n = Number(s);
+      return Number.isFinite(n) ? Math.trunc(n) : NaN;
+    }
+
+    function trimTrailingBlankHeaderCells(headerLabels) {
+      let end = headerLabels.length;
+      while (end > 0 && normalizeHeaderCompareKey(headerLabels[end - 1]) === "") {
+        end -= 1;
+      }
+      return end === headerLabels.length ? headerLabels : headerLabels.slice(0, end);
+    }
+
+    function rowIsEffectivelyEmpty(row) {
+      if (!row || row.length === 0) return true;
+      for (let i = 0; i < row.length; i += 1) {
+        const v = row[i];
+        if (v !== null && v !== undefined && String(v).trim() !== "") return false;
+      }
+      return true;
+    }
+
+    /**
+     * Remove coluna duplicada com o mesmo codigo do registro (ex.: |0200|0200|10167|
+     * ou |C191|C191|0,12|). Comum quando Excel desloca colunas ou layout exportado duas vezes.
+     */
+    function removeDuplicateLeadingRegField(reg, fields, schema) {
+      if (!schema || fields.length < 2) return;
+      if (fields[0] !== reg || fields[1] !== reg) return;
+      const third = fields[2] != null ? String(fields[2]).trim() : "";
+      if (fields.length > schema.length) {
+        fields.splice(1, 1);
+        return;
+      }
+      if (reg === "0200") {
+        if (third !== "" && /^[0-9]{4,}$/.test(third)) {
+          fields.splice(1, 1);
+        }
+        return;
+      }
+      if (reg !== "0000") {
+        fields.splice(1, 1);
+      }
+    }
+
+    /**
+     * Ajustes de formato alinhados ao layout EFD ICMS/IPI (validadores de tamanho/conteudo).
+     * COD_GEN no 0200: 2 digitos; EX_IPI: 3; NCM: 8; CEST: 7 quando numericos.
+     */
+    function applyLayoutFormattingForSped(reg, fields, schema) {
+      for (let i = 0; i < schema.length; i += 1) {
+        const name = schema[i];
+        if (name === "REG") {
+          fields[i] = reg;
+          continue;
+        }
+        let v = fields[i] == null ? "" : String(fields[i]).trim();
+        if (reg === "0200") {
+          if (name === "COD_GEN" && v !== "") {
+            const d = v.replace(/\D/g, "");
+            if (d.length === 1) v = d.padStart(2, "0");
+          }
+          if (name === "EX_IPI" && v !== "") {
+            const d = v.replace(/\D/g, "");
+            if (d.length >= 1 && d.length <= 2) v = d.padStart(3, "0");
+          }
+          if (name === "COD_NCM" && v !== "") {
+            const d = v.replace(/\D/g, "");
+            if (d.length >= 1 && d.length < 8) v = d.padStart(8, "0");
+          }
+          if (name === "CEST" && v !== "") {
+            const d = v.replace(/\D/g, "");
+            if (d.length >= 1 && d.length < 7) v = d.padStart(7, "0");
+          }
+        }
+        const decPl = getSpedDecimalPlaces(name, reg);
+        if (decPl != null && v !== "") {
+          v = normalizeDecimalStringForSpedField(name, v, reg);
+        }
+        if (v.indexOf("|") >= 0) v = v.replace(/\|/g, " ");
+        fields[i] = v;
+      }
+    }
+
+    function finalizeFieldsForSpedTxt(reg, fieldsIn) {
+      const schema = SPED_SCHEMA[reg];
+      if (!schema) return fieldsIn.slice();
+      const fields = fieldsIn.map((x) => (x == null ? "" : String(x).trim()));
+      removeDuplicateLeadingRegField(reg, fields, schema);
+      while (fields.length < schema.length) fields.push("");
+      if (fields.length > schema.length) fields.length = schema.length;
+      fields[0] = reg;
+      applyLayoutFormattingForSped(reg, fields, schema);
+      return fields;
+    }
+
+    function normalizeExcelRowToSpedFields(reg, schema, ownRaw) {
+      const mapped = [];
+      for (let i = 0; i < ownRaw.length; i += 1) {
+        const fieldName = i < schema.length ? schema[i] : schema[0];
+        mapped.push(normalizeExcelCellForSped(ownRaw[i], fieldName, reg));
+      }
+      return finalizeFieldsForSpedTxt(reg, mapped);
+    }
+
+    function buildSpedLine(fields) {
+      const parts = fields.map((f) => {
+        const x = f == null ? "" : String(f);
+        return x.replace(/\r\n?|\n|\r/g, " ");
+      });
+      return "|" + parts.join("|") + "|";
+    }
+
+    /**
+     * Codifica string Unicode em bytes Latin-1; caracteres fora de U+00FF viram '?'.
+     */
+    function encodeLatin1String(str) {
+      const out = new Uint8Array(str.length);
+      for (let i = 0; i < str.length; i += 1) {
+        const code = str.charCodeAt(i);
+        out[i] = code <= 255 ? code : 63;
+      }
+      return out;
+    }
+
+    /**
+     * Impede que o Excel interprete __ORDEM como data ou altere precisao. Coluna = texto formato @.
+     * ordColIndex: indice da coluna __ORDEM (ultima no layout REDE; primeira em arquivos legados).
+     */
+    function applyOrdemColumnAsText(ws, ordColIndex) {
+      if (!ws || !ws["!ref"] || ordColIndex == null || ordColIndex < 0) return;
+      const d = XLSX.utils.decode_range(ws["!ref"]);
+      for (let r = d.s.r + 1; r <= d.e.r; r += 1) {
+        const addr = XLSX.utils.encode_cell({ r, c: ordColIndex });
+        const cell = ws[addr];
+        if (!cell) continue;
+        const raw = cell.v;
+        cell.t = "s";
+        cell.v = raw == null || raw === "" ? "" : String(raw);
+        cell.z = "@";
+        if (cell.w != null) delete cell.w;
+      }
+    }
+
+    function readMetaFrom0000Sheet(wb) {
+      const ws = wb.Sheets["0000"];
+      if (!ws) return { cnpj: "", dtIni: "" };
+      let rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
+      rows = expandAoAFromWorksheet(ws, rows);
+      if (!rows || rows.length < 2) return { cnpj: "", dtIni: "" };
+      const headerLabels = rows[0].map((h) => (h == null ? "" : h));
+      const dataRow = rows[1];
+      const schema = SPED_SCHEMA["0000"];
+      let cnpj = "";
+      let dtIni = "";
+      const ordIdxHead = findOrderColumnIndex(headerLabels);
+      const ordOffset = ordIdxHead === 0 ? 1 : 0;
+      const icnpj = findHeaderColumnIndex(headerLabels, "CNPJ");
+      const idtIni = findHeaderColumnIndex(headerLabels, "DT_INI");
+      if (icnpj >= 0 && dataRow) {
+        cnpj = normalizeExcelCellForSped(dataRow[icnpj], "CNPJ");
+      }
+      if (idtIni >= 0 && dataRow) {
+        dtIni = normalizeExcelCellForSped(dataRow[idtIni], "DT_INI");
+      }
+      if (!cnpj && schema[6] === "CNPJ" && dataRow && dataRow[6 + ordOffset] != null) {
+        cnpj = normalizeExcelCellForSped(dataRow[6 + ordOffset], "CNPJ");
+      }
+      if (!dtIni && schema[3] === "DT_INI" && dataRow && dataRow[3 + ordOffset] != null) {
+        dtIni = normalizeExcelCellForSped(dataRow[3 + ordOffset], "DT_INI");
+      }
+      return { cnpj, dtIni };
+    }
+
+    async function workbookToSpedLatin1Blob(wb, onProgress, options) {
+      const allowSyntheticOrder = options && options.allowSyntheticOrder === true;
+      /** Linhas com ordem original do arquivo SPED (obrigatorio para C100/C190/C191 em sequencia). */
+      const collected = [];
+      const perSheetCounts = {};
+      let lineCount = 0;
+      let firstLineOut = "";
+      let minOrderSeen = Infinity;
+      let syntheticSeq = 0;
+      let collectSeq = 0;
+      const totalSheets = SHEET_ORDER.filter((r) => wb.Sheets[r]).length;
+      let processedSheets = 0;
+
+      for (let oi = 0; oi < SHEET_ORDER.length; oi += 1) {
+        const reg = SHEET_ORDER[oi];
+        const ws = wb.Sheets[reg];
+        if (!ws) continue;
+
+        let rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
+        rows = expandAoAFromWorksheet(ws, rows);
+        if (!rows || rows.length <= 1) {
+          processedSheets += 1;
+          continue;
+        }
+
+        const headerRow = rows[0];
+        const headerLabels = headerRow.map((h) => (h == null ? "" : h));
+        const ordCol = allowSyntheticOrder ? -1 : findOrderColumnIndex(headerLabels);
+        const parsed = parseHeaderOwnStart(headerRow, reg);
+        if (parsed.error) {
+          throw new Error(parsed.error);
+        }
+        const ownStart = parsed.ownStart;
+        const schema = SPED_SCHEMA[reg];
+        const ownLen = schema.length;
+        /** +1 coluna: detectar e remover REG duplicado sem perder ultimo campo do registro */
+        const grossOwn = ownLen + 1;
+
+        let outCount = 0;
+        const rowChunk = 1500;
+        for (let r = 1; r < rows.length; r += 1) {
+          const row = rows[r];
+          if (rowIsEffectivelyEmpty(row)) continue;
+          let ordVal = NaN;
+          if (allowSyntheticOrder) {
+            ordVal = syntheticSeq;
+            syntheticSeq += 1;
+          } else if (ordCol >= 0) {
+            ordVal = parseOrderCellToNumber(row[ordCol]);
+          }
+          const maxNeed = ownStart + grossOwn;
+          const cells = new Array(maxNeed);
+          for (let c = 0; c < maxNeed; c += 1) {
+            cells[c] = row[c] !== undefined ? row[c] : "";
+          }
+          const ownRaw = cells.slice(ownStart, ownStart + grossOwn);
+          const fields = normalizeExcelRowToSpedFields(reg, schema, ownRaw);
+          const lineOut = buildSpedLine(fields);
+          if (!firstLineOut) {
+            firstLineOut = lineOut;
+          }
+          collected.push({ ord: ordVal, line: lineOut, _seq: collectSeq });
+          collectSeq += 1;
+          if (Number.isFinite(ordVal) && ordVal < minOrderSeen) minOrderSeen = ordVal;
+          outCount += 1;
+          lineCount += 1;
+          if (outCount % rowChunk === 0) {
+            await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+          }
+        }
+        perSheetCounts[reg] = outCount;
+        processedSheets += 1;
+
+        if (typeof onProgress === "function") {
+          const pct = 15 + Math.round((processedSheets / Math.max(1, totalSheets)) * 70);
+          onProgress(pct, "Montando linhas SPED... aba " + reg + " (" + processedSheets + "/" + totalSheets + ")");
+        }
+
+        await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+      }
+
+      if (!allowSyntheticOrder) {
+        const missingOrd = collected.some((x) => !Number.isFinite(x.ord));
+        if (missingOrd || !Number.isFinite(minOrderSeen)) {
+          const aliasesHint = ORDER_COLUMN_HEADER_ALIASES.join(", ");
+          throw new Error(
+            "Esta planilha nao possui coluna de ordem reconhecida nas abas (ou valores invalidos). " +
+              "Nomes aceitos no cabecalho: " +
+              aliasesHint +
+              ". " +
+              "Reabra o TXT neste conversor e gere o Excel aqui, ou marque a opcao \"sem coluna de ordem\" abaixo (risco de hierarquia SPED). " +
+              "Sem ordem global nao e possivel, no modo padrao, restaurar a sequencia exata (C100, C190, C191, C170, etc.) do validador."
+          );
+        }
+        const ordFreq = new Map();
+        for (let i = 0; i < collected.length; i += 1) {
+          const k = collected[i].ord;
+          ordFreq.set(k, (ordFreq.get(k) || 0) + 1);
+        }
+        let dupCount = 0;
+        ordFreq.forEach((c) => {
+          if (c > 1) dupCount += c - 1;
+        });
+        if (dupCount > 0) {
+          throw new Error(
+            "A coluna de ordem global tem " +
+              dupCount +
+              " valor(es) repetido(s). Isso quebra a hierarquia SPED (ex.: cada |C191| logo apos o |C190| dele). " +
+              "Causa tipica: apagar __ORDEM e usar 1,2,3... separado em cada aba. Reimporte o TXT aqui para recriar o Excel ou unifique numeros unicos por linha do arquivo."
+          );
+        }
+      }
+
+      collected.sort((a, b) => {
+        if (a.ord !== b.ord) return a.ord < b.ord ? -1 : 1;
+        return a._seq - b._seq;
+      });
+      const lines = collected.map((x) => x.line);
+
+      const textBody = lines.join("\r\n");
+      const bytes = encodeLatin1String(textBody + "\r\n");
+      const blob = new Blob([bytes], { type: "text/plain;charset=ISO-8859-1" });
+      return { blob, perSheetCounts, lineCount, firstLineOut };
+    }
+
+    function renderPreviewXlsx(perSheetCounts) {
+      previewBodyXlsx.innerHTML = "";
+      let rows = 0;
+      for (const reg of SHEET_ORDER) {
+        const count = perSheetCounts[reg] || 0;
+        if (count <= 0) continue;
+        rows += 1;
+        const tr = document.createElement("tr");
+        const tdReg = document.createElement("td");
+        const tdName = document.createElement("td");
+        const tdCount = document.createElement("td");
+        tdReg.textContent = reg;
+        tdName.textContent = REGISTRY_NAMES[reg] || ("Registro " + reg);
+        tdCount.textContent = count.toLocaleString("pt-BR");
+        tr.appendChild(tdReg);
+        tr.appendChild(tdName);
+        tr.appendChild(tdCount);
+        previewBodyXlsx.appendChild(tr);
+      }
+      previewCardXlsx.hidden = rows === 0;
+    }
+
+    function buildTxtOutputFileName(meta) {
+      const cnpj = (meta && meta.cnpj ? String(meta.cnpj) : "CNPJ").replace(/\D/g, "") || "CNPJ";
+      const dtIni = meta && meta.dtIni ? String(meta.dtIni) : "";
+      const period = monthYearFromDate(dtIni) || "MMAAAA";
+      return "EFD_ICMS_IPI_" + cnpj + "_" + period + ".txt";
+    }
+
+    async function handleFileXlsx(file) {
+      if (!file || isProcessingXlsx) return;
+
+      resetOutputStateXlsx();
+      setBusyStateXlsx(true);
+      progressCardXlsx.hidden = false;
+      updateProgressXlsx(0, "Aguardando inicio...");
+
+      fileInfoXlsx.textContent = "Arquivo selecionado: " + file.name + " (" + formatBytes(file.size) + ")";
+
+      try {
+        if (!/\.xlsx$/i.test(file.name)) {
+          throw new Error("Arquivo invalido: selecione um arquivo .xlsx.");
+        }
+
+        const mb = file.size / (1024 * 1024);
+        if (mb > 180) {
+          addStatus(
+            "Aviso: arquivo muito grande (~" +
+              mb.toFixed(0) +
+              " MB). Feche outras abas e aguarde; se o navegador travar, tente Chrome/Edge ou divida a planilha.",
+            "warning",
+            statusAreaXlsx
+          );
+        } else if (mb > 80) {
+          addStatus(
+            "Arquivo grande (~" + mb.toFixed(0) + " MB): a leitura pode levar varios minutos. Mantenha esta aba em foco.",
+            "info",
+            statusAreaXlsx
+          );
+        } else if (mb > 45) {
+          addStatus("Arquivo acima de ~45 MB: conversao suportada — aguarde o fim da leitura do Excel.", "info", statusAreaXlsx);
+        }
+
+        addStatus("Lendo planilha Excel...", "info", statusAreaXlsx);
+        updateProgressXlsx(2, "Alocando e lendo " + formatBytes(file.size) + "...");
+        await new Promise((r) => requestAnimationFrame(r));
+
+        let data = await file.arrayBuffer();
+        updateProgressXlsx(4, "Decodificando workbook (pode demorar em arquivos grandes)...");
+        await new Promise((r) => setTimeout(r, 0));
+
+        let wb;
+        try {
+          wb = XLSX.read(data, { type: "array", cellDates: false });
+        } finally {
+          data = null;
+        }
+
+        updateProgressXlsx(8, "Workbook carregado. Convertendo abas...");
+
+        if (!wb.Sheets["0000"]) {
+          throw new Error('Planilha invalida: e obrigatoria a aba "0000".');
+        }
+
+        const metaFromSheet = readMetaFrom0000Sheet(wb);
+        currentXlsxMeta = metaFromSheet;
+
+        addStatus("Convertendo abas para linhas SPED (Latin-1)...", "info", statusAreaXlsx);
+        updateProgressXlsx(12, "Convertendo abas para linhas SPED...");
+
+        const allowSynthetic = document.getElementById("allowSyntheticOrderXlsx") && document.getElementById("allowSyntheticOrderXlsx").checked;
+        const { blob, perSheetCounts, lineCount, firstLineOut } = await workbookToSpedLatin1Blob(wb, updateProgressXlsx, {
+          allowSyntheticOrder: allowSynthetic
+        });
+
+        if (allowSynthetic) {
+          addStatus(
+            "Ordem do TXT: sequencia das abas e linhas (sem coluna de ordem). Se o validador SPED reclamar de Bloco C, use o fluxo TXT → Excel desta pagina para preservar __ORDEM.",
+            "warning",
+            statusAreaXlsx
+          );
+        }
+
+        if (firstLineOut && !firstLineOut.startsWith("|0000|")) {
+          addStatus(
+            "Aviso: a primeira linha do TXT nao comecou com |0000|. Confira se a aba 0000 possui dados e se nao ha linhas em branco antes.",
+            "warning",
+            statusAreaXlsx
+          );
+        }
+
+        currentTxtLatin1Blob = blob;
+        currentTxtFileName = buildTxtOutputFileName(metaFromSheet);
+
+        renderPreviewXlsx(perSheetCounts);
+
+        const totalStr = lineCount.toLocaleString("pt-BR");
+        downloadMetaXlsx.textContent =
+          "Total de linhas geradas: " + totalStr + " | Arquivo: " + currentTxtFileName + " | Encoding: ISO-8859-1, CRLF";
+        downloadCardXlsx.hidden = false;
+
+        updateProgressXlsx(100, "✅ TXT gerado com sucesso!");
+        addStatus("Conclusao: clique em \"Baixar SPED (.txt)\" para salvar o arquivo.", "success", statusAreaXlsx);
+      } catch (error) {
+        console.error(error);
+        updateProgressXlsx(0, "Falha no processamento.");
+        addStatus(error.message || "Erro inesperado durante a conversao.", "error", statusAreaXlsx);
+      } finally {
+        setBusyStateXlsx(false);
+      }
+    }
+
+    function sanitizeLine(line) {
+      return line.replace(/^\uFEFF/, "").replace(/^ï»¿/, "").trim();
+    }
+
+    function formatDateForPreview(raw) {
+      if (!/^\d{8}$/.test(raw || "")) return raw || "";
+      const dd = raw.slice(0, 2);
+      const mm = raw.slice(2, 4);
+      const yyyy = raw.slice(4, 8);
+      return dd + "/" + mm + "/" + yyyy;
+    }
+
+    function monthYearFromDate(raw) {
+      return /^\d{8}$/.test(raw || "") ? raw.slice(2, 8) : "";
+    }
+
+    function createContextMap() {
+      return {
+        "0000": null,
+        "0200": null,
+        "C100": null,
+        "C110": null,
+        "C190": null,
+        "C500": null,
+        "E001": null,
+        "E100": null,
+        "H005": null
+      };
+    }
+
+    function normalizeRecordFields(reg, fields) {
+      const schema = SPED_SCHEMA[reg];
+      const normalized = new Array(schema.length);
+      for (let i = 0; i < schema.length; i += 1) {
+        normalized[i] = fields[i] !== undefined ? String(fields[i]) : "";
+      }
+      return normalized;
+    }
+
+    function recordArrayToObject(reg, normalized) {
+      const schema = SPED_SCHEMA[reg];
+      const obj = {};
+      for (let i = 0; i < schema.length; i += 1) {
+        obj[schema[i]] = normalized[i] || "";
+      }
+      return obj;
+    }
+
+    function updateContextState(reg, recordObj, ctx) {
+      const leavingBlock0 = new Set(["B001", "C001", "D001", "E001", "G001", "H001", "K001", "1001", "9001"]);
+      if (reg === "0990" || leavingBlock0.has(reg)) {
+        ctx["0200"] = null;
+      }
+
+      switch (reg) {
+        case "0000":
+          ctx["0000"] = recordObj;
+          break;
+        case "0200":
+          ctx["0200"] = recordObj;
+          break;
+        case "C001":
+          ctx["C100"] = null;
+          ctx["C110"] = null;
+          ctx["C190"] = null;
+          ctx["C500"] = null;
+          break;
+        case "C100":
+          ctx["C100"] = recordObj;
+          ctx["C110"] = null;
+          ctx["C190"] = null;
+          break;
+        case "C110":
+          ctx["C110"] = recordObj;
+          break;
+        case "C190":
+          ctx["C190"] = recordObj;
+          break;
+        case "C500":
+          ctx["C500"] = recordObj;
+          ctx["C100"] = null;
+          ctx["C110"] = null;
+          ctx["C190"] = null;
+          break;
+        case "C990":
+          ctx["C100"] = null;
+          ctx["C110"] = null;
+          ctx["C190"] = null;
+          ctx["C500"] = null;
+          break;
+        case "E001":
+          ctx["E001"] = recordObj;
+          ctx["E100"] = null;
+          break;
+        case "E100":
+          ctx["E100"] = recordObj;
+          break;
+        case "E990":
+          ctx["E001"] = null;
+          ctx["E100"] = null;
+          break;
+        case "H001":
+          ctx["H005"] = null;
+          break;
+        case "H005":
+          ctx["H005"] = recordObj;
+          break;
+        case "H990":
+          ctx["H005"] = null;
+          break;
+        default:
+          break;
+      }
+    }
+
+    function getContextValue(ctx, parentReg, field) {
+      const parent = ctx[parentReg];
+      if (!parent || parent[field] === undefined || parent[field] === null) return "";
+      return String(parent[field]);
+    }
+
+    function blockMessageByReg(reg) {
+      if (!reg) return "Analisando estrutura...";
+      const first = reg.charAt(0);
+      if (first === "C") return "Processando bloco C (NF-e)...";
+      if (first === "E") return "Processando bloco E (Apuracao)...";
+      if (first === "H") return "Processando bloco H (Inventario)...";
+      if (first === "0") return "Analisando estrutura...";
+      return "Processando bloco " + first + "...";
+    }
+
+    async function readFileAsLatin1(fileOrBuffer) {
+      let buffer;
+      if (fileOrBuffer instanceof ArrayBuffer) {
+        buffer = fileOrBuffer;
+      } else {
+        buffer = await fileOrBuffer.arrayBuffer();
+      }
+      const decoder = new TextDecoder("iso-8859-1");
+      return decoder.decode(buffer);
+    }
+
+    function detectPossibleUtf8Buffer(arrayBuffer, latinText) {
+      const bytes = new Uint8Array(arrayBuffer);
+      const hasUtf8Bom = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+      const sample = (latinText || "").slice(0, 12000);
+      const suspiciousChars = /Ã.|�/.test(sample);
+      return hasUtf8Bom || suspiciousChars;
+    }
+
+    async function parseSped(arrayBuffer, onProgress) {
+      const text = await readFileAsLatin1(arrayBuffer);
+      const lines = text.split(/\r?\n/);
+      const totalLines = lines.length;
+
+      const firstMeaningful = lines.find((line) => sanitizeLine(line).length > 0);
+      if (!firstMeaningful || !sanitizeLine(firstMeaningful).startsWith("|0000|")) {
+        throw new Error("Arquivo invalido: a primeira linha util deve iniciar com |0000|.");
+      }
+
+      const sheets = {};
+      const ctx = createContextMap();
+      const unknownRegs = new Set();
+      let validRecordCount = 0;
+      const chunkSize = 1500;
+
+      for (let start = 0; start < totalLines; start += chunkSize) {
+        const end = Math.min(start + chunkSize, totalLines);
+        let lastRegInChunk = "";
+
+        for (let idx = start; idx < end; idx += 1) {
+          const raw = lines[idx];
+          if (!raw) continue;
+
+          const line = sanitizeLine(raw);
+          if (!line || !line.startsWith("|") || !line.endsWith("|")) continue;
+
+          const parts = line.split("|");
+          if (parts.length < 3) continue;
+          const fields = parts.slice(1, -1);
+          const reg = fields[0];
+          lastRegInChunk = reg;
+
+          if (!SPED_SCHEMA[reg]) {
+            if (unknownRegs.size < 20 && !unknownRegs.has(reg)) {
+              console.warn("Registro desconhecido ignorado:", reg);
+            }
+            unknownRegs.add(reg);
+            continue;
+          }
+
+          const normalized = finalizeFieldsForSpedTxt(reg, fields);
+          const recordObj = recordArrayToObject(reg, normalized);
+          updateContextState(reg, recordObj, ctx);
+
+          const contextSpec = CONTEXT_COLUMNS[reg] || [];
+          const contextValues = reg === "0000"
+            ? []
+            : contextSpec.map(([parentReg, field]) => getContextValue(ctx, parentReg, field));
+
+          validRecordCount += 1;
+          const seqCell = String(validRecordCount);
+          const finalRow = reg === "0000"
+            ? normalized.concat([seqCell])
+            : contextValues.concat(normalized).concat([seqCell]);
+
+          if (!sheets[reg]) {
+            sheets[reg] = [];
+          }
+          sheets[reg].push(finalRow);
+        }
+
+        const percent = 10 + Math.round((end / totalLines) * 75);
+        if (typeof onProgress === "function") {
+          const message = blockMessageByReg(lastRegInChunk) + " (" + end.toLocaleString("pt-BR") + "/" + totalLines.toLocaleString("pt-BR") + ")";
+          onProgress(percent, message);
+        }
+
+        // Yield para manter a UI responsiva em arquivos grandes.
+        await new Promise((resolve) => {
+          window.requestAnimationFrame(() => resolve());
+        });
+      }
+
+      const rec0000 = ctx["0000"];
+      if (!rec0000) {
+        throw new Error("Arquivo invalido: registro 0000 nao encontrado.");
+      }
+
+      return {
+        sheets,
+        meta: {
+          cnpj: rec0000.CNPJ || "",
+          dtIni: rec0000.DT_INI || "",
+          dtFin: rec0000.DT_FIN || "",
+          dtIniPreview: formatDateForPreview(rec0000.DT_INI || ""),
+          dtFinPreview: formatDateForPreview(rec0000.DT_FIN || ""),
+          totalRecords: validRecordCount,
+          unknownRecords: Array.from(unknownRegs)
+        }
+      };
+    }
+
+    function buildExcel(sheets) {
+      const wb = XLSX.utils.book_new();
+
+      for (const reg of SHEET_ORDER) {
+        const dataRows = sheets[reg];
+        if (!dataRows || dataRows.length === 0) continue;
+
+        const contextCols = CONTEXT_COLUMNS[reg] || [];
+        const ownCols = SPED_SCHEMA[reg] || [];
+        const headerRow = reg === "0000"
+          ? ownCols.concat(["__ORDEM"])
+          : contextCols.map(([parent, field]) => parent + "-" + field).concat(ownCols).concat(["__ORDEM"]);
+
+        const wsData = [headerRow].concat(dataRows);
+        convertDateStringsToExcelSerialsInSheetAoA(wsData);
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        applyOrdemColumnAsText(ws, headerRow.length - 1);
+        ws["!freeze"] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft", state: "frozen" };
+        ws["!cols"] = headerRow.map((head) => ({
+          wch: Math.min(42, Math.max(10, String(head).length + 2))
+        }));
+        XLSX.utils.book_append_sheet(wb, ws, reg);
+      }
+
+      return wb;
+    }
+
+    function buildOutputFileName(meta) {
+      const cnpj = (meta && meta.cnpj ? String(meta.cnpj) : "CNPJ").replace(/\D/g, "") || "CNPJ";
+      const dtIni = meta && meta.dtIni ? String(meta.dtIni) : "";
+      const period = monthYearFromDate(dtIni) || "MMAAAA";
+      return "EFD_ICMS_IPI_" + cnpj + "_" + period + ".xlsx";
+    }
+
+    function renderPreview(sheets) {
+      previewBody.innerHTML = "";
+      let renderedRows = 0;
+
+      for (const reg of SHEET_ORDER) {
+        const count = sheets[reg] ? sheets[reg].length : 0;
+        if (count <= 0) continue;
+        renderedRows += 1;
+
+        const tr = document.createElement("tr");
+        const tdReg = document.createElement("td");
+        const tdName = document.createElement("td");
+        const tdCount = document.createElement("td");
+
+        tdReg.textContent = reg;
+        tdName.textContent = REGISTRY_NAMES[reg] || ("Registro " + reg);
+        tdCount.textContent = count.toLocaleString("pt-BR");
+
+        tr.appendChild(tdReg);
+        tr.appendChild(tdName);
+        tr.appendChild(tdCount);
+        previewBody.appendChild(tr);
+      }
+
+      previewCard.hidden = renderedRows === 0;
+    }
+
+    async function handleFile(file) {
+      if (!file || isProcessingTxt) return;
+
+      resetOutputState();
+      setBusyStateTxt(true);
+      progressCard.hidden = false;
+      updateProgress(0, "Aguardando inicio...");
+
+      fileInfo.textContent = "Arquivo selecionado: " + file.name + " (" + formatBytes(file.size) + ")";
+
+      try {
+        if (!/\.txt$/i.test(file.name)) {
+          throw new Error("Arquivo invalido: selecione um arquivo com extensao .txt.");
+        }
+
+        if (file.size > 120 * 1024 * 1024) {
+          addStatus(
+            "Arquivo TXT grande (" +
+              formatBytes(file.size) +
+              "): conversao suportada; o navegador pode demorar. Feche outras abas se necessario.",
+            "info"
+          );
+        }
+
+        addStatus("Decodificando arquivo (Latin-1)...", "info");
+        updateProgress(3, "Decodificando arquivo (Latin-1)...");
+        const arrayBuffer = await file.arrayBuffer();
+
+        const latinPreviewText = await readFileAsLatin1(arrayBuffer);
+        if (detectPossibleUtf8Buffer(arrayBuffer, latinPreviewText)) {
+          addStatus("Aviso: o arquivo pode estar em UTF-8. A conversao continuara com tentativa em Latin-1.", "warning");
+        }
+
+        addStatus("Analisando estrutura...", "info");
+        updateProgress(10, "Analisando estrutura...");
+        const { sheets, meta } = await parseSped(arrayBuffer, updateProgress);
+
+        addStatus("Gerando planilha Excel...", "info");
+        updateProgress(88, "Gerando planilha Excel...");
+        await new Promise((resolve) => {
+          window.requestAnimationFrame(() => resolve());
+        });
+        const workbook = buildExcel(sheets);
+
+        currentWorkbook = workbook;
+        currentMeta = meta;
+        currentFileName = buildOutputFileName(meta);
+
+        renderPreview(sheets);
+
+        const total = (meta.totalRecords || 0).toLocaleString("pt-BR");
+        const period = meta.dtIniPreview && meta.dtFinPreview
+          ? " | Periodo: " + meta.dtIniPreview + " a " + meta.dtFinPreview
+          : "";
+        downloadMeta.textContent = "Total de registros processados: " + total + " | Arquivo: " + currentFileName + period;
+        downloadCard.hidden = false;
+
+        if (meta.unknownRecords && meta.unknownRecords.length > 0) {
+          addStatus("Registros desconhecidos ignorados: " + meta.unknownRecords.slice(0, 20).join(", "), "warning");
+        }
+
+        updateProgress(100, "✅ Conversao concluida!");
+        addStatus("Conversao concluida com sucesso. Clique em \"Baixar Excel (.xlsx)\".", "success");
+      } catch (error) {
+        console.error(error);
+        updateProgress(0, "Falha no processamento.");
+        addStatus(error.message || "Erro inesperado durante a conversao.", "error");
+      } finally {
+        setBusyStateTxt(false);
+      }
+    }
+
+    tabTxtToXlsx.addEventListener("click", () => {
+      if (tabTxtToXlsx.disabled) return;
+      switchMode("txt2xlsx");
+    });
+
+    tabXlsxToTxt.addEventListener("click", () => {
+      if (tabXlsxToTxt.disabled) return;
+      switchMode("xlsx2txt");
+    });
+
+    dropZone.addEventListener("click", () => {
+      if (!isProcessingTxt) fileInput.click();
+    });
+
+    dropZone.addEventListener("keydown", (event) => {
+      if (isProcessingTxt) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+      if (file) {
+        await handleFile(file);
+      }
+      fileInput.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((type) => {
+      dropZone.addEventListener(type, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isProcessingTxt) dropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((type) => {
+      dropZone.addEventListener(type, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.remove("dragover");
+      });
+    });
+
+    dropZone.addEventListener("drop", async (event) => {
+      if (isProcessingTxt) return;
+      const file = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files[0] : null;
+      if (file) {
+        await handleFile(file);
+      }
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      if (!currentWorkbook || !currentFileName) {
+        addStatus("Nenhum arquivo processado disponivel para download.", "warning", statusArea);
+        return;
+      }
+      XLSX.writeFile(currentWorkbook, currentFileName);
+      addStatus("Download iniciado: " + currentFileName, "success", statusArea);
+    });
+
+    dropZoneXlsx.addEventListener("click", () => {
+      if (!isProcessingXlsx) fileInputXlsx.click();
+    });
+
+    dropZoneXlsx.addEventListener("keydown", (event) => {
+      if (isProcessingXlsx) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInputXlsx.click();
+      }
+    });
+
+    fileInputXlsx.addEventListener("change", async (event) => {
+      const f = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+      if (f) {
+        await handleFileXlsx(f);
+      }
+      fileInputXlsx.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((type) => {
+      dropZoneXlsx.addEventListener(type, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isProcessingXlsx) dropZoneXlsx.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((type) => {
+      dropZoneXlsx.addEventListener(type, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZoneXlsx.classList.remove("dragover");
+      });
+    });
+
+    dropZoneXlsx.addEventListener("drop", async (event) => {
+      if (isProcessingXlsx) return;
+      const f = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files[0] : null;
+      if (f) {
+        await handleFileXlsx(f);
+      }
+    });
+
+    downloadTxtBtn.addEventListener("click", () => {
+      if (!currentTxtLatin1Blob || !currentTxtFileName) {
+        addStatus("Nenhum TXT gerado disponivel para download.", "warning", statusAreaXlsx);
+        return;
+      }
+      const url = URL.createObjectURL(currentTxtLatin1Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = currentTxtFileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+      addStatus("Download iniciado: " + currentTxtFileName, "success", statusAreaXlsx);
+    });
+
+    refreshTabDisabledState();
+  </script>
+</body>
+</html>

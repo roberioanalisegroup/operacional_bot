@@ -1,0 +1,51 @@
+{
+  "name": "automacao-sped",
+  "version": "1.0.0",
+  "description": "Automação SPED Contribuições - M410",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win --x64 --config.win.target=portable"
+  },
+  "build": {
+    "appId": "com.automacao.sped",
+    "productName": "Automação SPED",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "sign": null,
+      "signingHashAlgorithms": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "AutomacaoSPED.html",
+      "main.js",
+      "preload.js"
+    ],
+    "extraResources": []
+  },
+  "keywords": [
+    "SPED",
+    "Contribuições",
+    "M410",
+    "Automação"
+  ],
+  "author": "Automação DIRBI",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  }
+}

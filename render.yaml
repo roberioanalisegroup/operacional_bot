@@ -1,0 +1,47 @@
+# Blueprint do Render. Ao conectar o repositório no Render, ele lê este arquivo
+# e cria/configura o serviço automaticamente.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: analise-central
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+
+    # Build
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+
+    # Start
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60 --access-logfile - --error-logfile -
+
+    # Health check
+    healthCheckPath: /healthz
+
+    autoDeploy: true
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.5"
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: AUTO_MIGRATE
+        value: "1"
+      - key: JWT_EXPIRES_HOURS
+        value: "8"
+
+      # Variáveis sensíveis: marque como "sync: false" para definir manualmente
+      # no painel do Render em Environment > Add Environment Variable.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_BOOTSTRAP_USERNAME
+        value: admin
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: ADMIN_BOOTSTRAP_DISPLAY_NAME
+        value: Administrador

@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Super Varejo e Atacado</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .kpi-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .kpi-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-wrapper {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper h3 {
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table caption {
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            text-align: center;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .currency {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .percentage {
+            text-align: right;
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        .import-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .import-section h2 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .file-input-label:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .sheet-selector {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .sheet-selector select {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1em;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+
+        .status-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .import-section {
+                display: none;
+            }
+        }
+
+        .brand-topbar {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            padding: 8px 14px 8px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(233,175,41,0.18);
+        }
+
+        .brand-topbar img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 4px 12px rgba(233,175,41,0.2));
+        }
+
+        .brand-topbar span {
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        .home-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(233,175,41,0.24);
+            background: rgba(0,0,0,0.22);
+            color: #fff7df;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .home-button .icon {
+            color: #e9af29;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top right, rgba(233,175,41,0.16), transparent 24%),
+                #0b0b0b;
+            color: #f5f1e8;
+        }
+
+        .container {
+            background: linear-gradient(180deg, #141414 0%, #101010 100%);
+            border: 1px solid rgba(233,175,41,0.14);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+        }
+
+        h1,
+        .subtitle,
+        .section-title,
+        .chart-wrapper h3 {
+            color: #f5f1e8;
+        }
+
+        .import-section,
+        .kpi-card {
+            background: linear-gradient(135deg, rgba(0,0,0,0.98) 0%, rgba(17,17,17,0.94) 62%, rgba(233,175,41,0.84) 100%);
+        }
+
+        .section-title {
+            border-bottom-color: #e9af29;
+        }
+
+        .file-input-label,
+        .sheet-selector select {
+            background: #e9af29;
+            color: #17120a;
+        }
+
+        .chart-wrapper,
+        table {
+            background: #181818;
+            color: #f5f1e8;
+            border: 1px solid #2f2a22;
+        }
+
+        table caption,
+        th {
+            background: #191919;
+            color: #f3cb70;
+        }
+
+        td {
+            border-bottom-color: #2f2a22;
+        }
+
+        tr:hover {
+            background: #202020;
+        }
+
+        .percentage {
+            color: #f0ba42;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand-topbar">
+            <img src="../assets/logo-analise-group.png" alt="Logo da Análise Group" />
+            <span>Análise Group</span>
+        </div>
+        <a class="home-button" href="../../index.html">
+            <span class="icon">&#8962;</span>
+            <span>Menu Inicial</span>
+        </a>
+        <h1>Comparativo de Faturamento</h1>
+        <p class="subtitle">Dashboard financeiro para análise de impostos e faturamento.</p>
+
+        <!-- Seção de Importação -->
+        <div class="import-section">
+            <h2>📊 Importar Planilha Excel</h2>
+            <div class="file-input-wrapper">
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
+                <label for="excelFile" class="file-input-label">
+                    📁 Selecionar Arquivo Excel
+                </label>
+            </div>
+            <div class="file-name" id="fileName"></div>
+            <div class="sheet-selector" id="sheetSelector">
+                <label for="sheetSelect" style="margin-right: 10px;">Selecione a aba:</label>
+                <select id="sheetSelect"></select>
+            </div>
+            <div class="status-message" id="statusMessage" style="display: none;"></div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <h3>Faturamento Médio 2024</h3>
+                <div class="value" id="kpiFat2024">-</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Faturamento Médio 2025</h3>
+                <div class="value" id="kpiFat2025">-</div>
+            </div>
+            <div class="kpi-card">
+                <h3>% Impostos Médio 2024</h3>
+                <div class="value" id="kpiImp2024">-</div>
+            </div>
+            <div class="kpi-card">
+                <h3>% Impostos Médio 2025</h3>
+                <div class="value" id="kpiImp2025">-</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="section">
+            <h2 class="section-title">Análise Visual</h2>
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>Faturamento Mensal (2024 vs 2025)</h3>
+                    <canvas id="faturamentoChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>% de Impostos Mensal (2024 vs 2025)</h3>
+                    <canvas id="impostosChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Composição de Impostos 2024</h3>
+                    <canvas id="composicao2024Chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Composição de Impostos 2025</h3>
+                    <canvas id="composicao2025Chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela 2024 -->
+        <div class="section">
+            <h2 class="section-title">Dados de 2024</h2>
+            <table id="tabela2024">
+                <caption>DADOS DE 2024</caption>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Jan/24</th>
+                        <th>Fev/24</th>
+                        <th>Mar/24</th>
+                        <th>Abr/24</th>
+                        <th>Mai/24</th>
+                        <th>Jun/24</th>
+                        <th>Jul/24</th>
+                        <th>Ago/24</th>
+                        <th>Set/24</th>
+                        <th>Out/24</th>
+                        <th>Nov/24</th>
+                        <th>Dez/24</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>PIS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>COFINS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ICMS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>FATURAMENTO</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>% DE IMPOSTOS</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabela 2025 -->
+        <div class="section">
+            <h2 class="section-title">Dados de 2025</h2>
+            <table id="tabela2025">
+                <caption>DADOS DE 2025</caption>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Jan/25</th>
+                        <th>Fev/25</th>
+                        <th>Mar/25</th>
+                        <th>Abr/25</th>
+                        <th>Mai/25</th>
+                        <th>Jun/25</th>
+                        <th>Jul/25</th>
+                        <th>Ago/25</th>
+                        <th>Set/25</th>
+                        <th>Out/25</th>
+                        <th>Nov/25</th>
+                        <th>Dez/25</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>PIS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>COFINS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ICMS</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>FATURAMENTO</strong></td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency">-</td>
+                        <td class="currency"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>% DE IMPOSTOS</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabela Comparativa -->
+        <div class="section">
+            <h2 class="section-title">Tabela Comparativa</h2>
+            <table id="tabelaComparativa">
+                <caption>TABELA COMPARATIVA</caption>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Janeiro</th>
+                        <th>Fevereiro</th>
+                        <th>Março</th>
+                        <th>Abril</th>
+                        <th>Maio</th>
+                        <th>Junho</th>
+                        <th>Julho</th>
+                        <th>Agosto</th>
+                        <th>Setembro</th>
+                        <th>Outubro</th>
+                        <th>Novembro</th>
+                        <th>Dezembro</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>PIS</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>COFINS</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ICMS</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>FATURAMENTO</strong></td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td class="percentage">-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="percentage"><strong>-</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para os gráficos
+        let faturamentoChart, impostosChart, composicao2024Chart, composicao2025Chart;
+        
+        // Dados para os gráficos (serão preenchidos após importação)
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const meses2025 = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+        // Função para converter valor brasileiro para número
+        function parseBrazilianNumber(value, isPercentage = false) {
+            // Se já é número, verificar se precisa converter
+            if (typeof value === 'number') {
+                // Se for percentual e o valor for menor que 0.1 (10%), pode ser que o Excel retornou como decimal
+                // Exemplo: 0.0064 (representa 0.64%) ou 0.0174 (representa 1.74%)
+                // Nesse caso, multiplicar por 100 para obter o percentual correto
+                if (isPercentage && value < 0.1 && value > 0) {
+                    return value * 100;
+                }
+                return value;
+            }
+            
+            if (!value || value === '#DIV/0!' || value === '-' || value === '' || value === null || value === undefined) return null;
+            
+            let str = String(value).trim();
+            const isPercent = str.includes('%') || isPercentage;
+            
+            // Remove R$, %, espaços
+            str = str.replace(/R\$\s*/g, '').replace(/%/g, '').replace(/\s+/g, '');
+            
+            // Se tem vírgula, é formato brasileiro (vírgula como decimal)
+            if (str.includes(',')) {
+                // Remove pontos (separadores de milhar) e substitui vírgula por ponto
+                str = str.replace(/\./g, '').replace(',', '.');
+            }
+            
+            const num = parseFloat(str);
+            if (isNaN(num)) return null;
+            
+            // Se for percentual e o valor for menor que 0.1 (10%), pode ser que o Excel retornou como decimal
+            // Exemplo: 0.0064 (representa 0.64%) ou 0.0174 (representa 1.74%)
+            // Nesse caso, multiplicar por 100 para obter o percentual correto
+            if (isPercent && num < 0.1 && num > 0) {
+                return num * 100;
+            }
+            
+            // Se for percentual, manter como está (1.74 ao invés de 0.0174)
+            return num;
+        }
+
+        // Função para processar dados do Excel
+        function processarDadosExcel(workbook) {
+            const sheetNames = workbook.SheetNames;
+            const sheetSelector = document.getElementById('sheetSelect');
+            const sheetSelectorDiv = document.getElementById('sheetSelector');
+            
+            // Limpar seleção anterior
+            sheetSelector.innerHTML = '';
+            
+            // Adicionar opções de abas
+            sheetNames.forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = name;
+                sheetSelector.appendChild(option);
+            });
+            
+            sheetSelectorDiv.style.display = 'block';
+            
+            // Processar primeira aba por padrão
+            processarAba(workbook.Sheets[sheetNames[0]], sheetNames[0]);
+            
+            // Listener para mudança de aba
+            sheetSelector.onchange = function() {
+                const selectedIndex = parseInt(this.value);
+                processarAba(workbook.Sheets[sheetNames[selectedIndex]], sheetNames[selectedIndex]);
+            };
+        }
+
+        function processarAba(sheet, sheetName) {
+            try {
+                // Converter sheet para JSON
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                
+                // Procurar por tabelas de dados
+                let dados2024 = null;
+                let dados2025 = null;
+                let dadosComparativa = null;
+                
+                // Identificar onde estão os dados - procurar primeiro por títulos específicos
+                // Primeiro, encontrar todas as posições dos títulos
+                let pos2024 = -1;
+                let pos2025 = -1;
+                let posComparativa = -1;
+                
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.length > 0) {
+                        const firstCell = String(row[0] || '').toUpperCase().trim();
+                        
+                        // Procurar especificamente por "DADOS DE 2024"
+                        if ((firstCell === 'DADOS DE 2024' || firstCell.includes('DADOS DE 2024')) && pos2024 === -1) {
+                            pos2024 = i;
+                        } 
+                        // Procurar especificamente por "DADOS DE 2025"
+                        else if ((firstCell === 'DADOS DE 2025' || firstCell.includes('DADOS DE 2025')) && pos2025 === -1) {
+                            pos2025 = i;
+                        } 
+                        // Procurar por "COMPARATIVA"
+                        else if ((firstCell.includes('COMPARATIVA') || firstCell.includes('COMPARATIVO')) && posComparativa === -1) {
+                            posComparativa = i;
+                        }
+                    }
+                }
+                
+                // Extrair dados das tabelas encontradas
+                if (pos2024 !== -1) {
+                    dados2024 = extrairDadosTabela(jsonData, pos2024);
+                }
+                if (pos2025 !== -1) {
+                    dados2025 = extrairDadosTabela(jsonData, pos2025);
+                }
+                if (posComparativa !== -1) {
+                    dadosComparativa = extrairDadosTabela(jsonData, posComparativa);
+                }
+                
+                // Se não encontrou com títulos específicos, procurar por padrões alternativos
+                // Procurar por linhas que contenham apenas o ano (sem outras informações de data)
+                if (!dados2024 || !dados2025) {
+                    for (let i = 0; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row && row.length > 0) {
+                            const firstCell = String(row[0] || '').toUpperCase().trim();
+                            
+                            // Verificar se é um cabeçalho de tabela (contém "ITEM" ou nomes de meses)
+                            const isHeaderRow = firstCell === 'ITEM' || 
+                                               (firstCell.includes('JAN') && !firstCell.includes('/')) ||
+                                               (firstCell.includes('FEV') && !firstCell.includes('/')) ||
+                                               (firstCell.includes('MAR') && !firstCell.includes('/'));
+                            
+                            if (isHeaderRow && i > 0) {
+                                // Verificar as linhas anteriores para identificar o título da tabela
+                                for (let j = Math.max(0, i - 3); j < i; j++) {
+                                    const prevRow = jsonData[j];
+                                    if (prevRow && prevRow.length > 0) {
+                                        const prevCell = String(prevRow[0] || '').toUpperCase().trim();
+                                        
+                                        // Verificar se contém apenas "2024" ou "2025" sem outras informações de data
+                                        if (prevCell === '2024' || (prevCell.includes('2024') && !prevCell.includes('/') && !dados2024)) {
+                                            dados2024 = extrairDadosTabela(jsonData, j);
+                                            break;
+                                        } else if (prevCell === '2025' || (prevCell.includes('2025') && !prevCell.includes('/') && !dados2025)) {
+                                            dados2025 = extrairDadosTabela(jsonData, j);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Se não encontrou tabelas específicas, tentar processar toda a planilha
+                if (!dados2024 && !dados2025) {
+                    dados2024 = extrairDadosTabela(jsonData, 0);
+                    if (jsonData.length > 20) {
+                        dados2025 = extrairDadosTabela(jsonData, Math.floor(jsonData.length / 2));
+                    }
+                }
+                
+                // Atualizar dashboard com os dados
+                if (dados2024) atualizarTabela2024(dados2024);
+                if (dados2025) atualizarTabela2025(dados2025);
+                if (dadosComparativa) atualizarTabelaComparativa(dadosComparativa);
+                
+                // Recalcular e atualizar gráficos usando os dados extraídos diretamente do Excel
+                atualizarGraficosComDados(dados2024, dados2025);
+                
+                mostrarStatus('Dados importados com sucesso da aba: ' + sheetName, 'success');
+            } catch (error) {
+                mostrarStatus('Erro ao processar aba: ' + error.message, 'error');
+            }
+        }
+
+        function extrairDadosTabela(jsonData, startRow) {
+            const dados = {
+                pis: [],
+                cofins: [],
+                icms: [],
+                faturamento: [],
+                percentualImpostos: []
+            };
+            
+            // Procurar cabeçalho com meses - começar da linha seguinte ao título
+            let headerRow = startRow;
+            // Se a linha inicial contém "DADOS DE", procurar o cabeçalho nas próximas linhas
+            const firstCellStart = String(jsonData[startRow] && jsonData[startRow][0] ? jsonData[startRow][0] : '').toUpperCase();
+            const startSearch = firstCellStart.includes('DADOS DE') ? startRow + 1 : startRow;
+            
+            for (let i = startSearch; i < Math.min(startSearch + 10, jsonData.length); i++) {
+                if (jsonData[i] && jsonData[i].length > 3) {
+                    const firstCell = String(jsonData[i][0] || '').toUpperCase().trim();
+                    // Verificar se é cabeçalho: contém "ITEM" ou nomes de meses
+                    if (firstCell === 'ITEM' || firstCell.includes('JAN') || firstCell.includes('MÊS') ||
+                        firstCell.includes('JANEIRO') || (firstCell.length < 10 && jsonData[i].length > 10)) {
+                        headerRow = i;
+                        break;
+                    }
+                }
+            }
+            
+            // Extrair dados das linhas - parar quando encontrar próxima tabela ou título
+            for (let i = headerRow + 1; i < jsonData.length && i < headerRow + 20; i++) {
+                const row = jsonData[i];
+                if (!row || row.length < 2) continue;
+                
+                const tipo = String(row[0] || '').toUpperCase().trim();
+                if (!tipo || tipo === '') continue;
+                
+                // Parar se encontrar início de outra tabela
+                if (tipo.includes('DADOS DE') || tipo.includes('COMPARATIVA') || tipo.includes('COMPARATIVO')) {
+                    break;
+                }
+                
+                const valores = [];
+                
+                // Extrair valores numéricos das colunas (pular primeira coluna que é o tipo e última que é média)
+                const isPercentRow = tipo.includes('%') || (tipo.includes('IMPOSTOS') && tipo.includes('%'));
+                for (let j = 1; j < row.length - 1; j++) {
+                    const cellValue = row[j];
+                    const isPercentCell = String(cellValue).includes('%');
+                    let valor = parseBrazilianNumber(cellValue, isPercentRow || isPercentCell);
+                    
+                    // Se for linha de percentual e o valor for muito pequeno (< 0.1), pode ser que o Excel retornou como decimal
+                    // Exemplo: Excel retorna 0.0064 (que representa 0.64%) ou 0.0174 (que representa 1.74%)
+                    // Nesse caso, multiplicar por 100
+                    if (isPercentRow && valor !== null && valor < 0.1 && valor > 0) {
+                        valor = valor * 100;
+                    }
+                    
+                    valores.push(valor);
+                }
+                
+                // Identificar o tipo de linha de forma mais precisa
+                // Priorizar verificação de % DE IMPOSTOS primeiro
+                if ((tipo.includes('%') && tipo.includes('IMPOSTOS')) || 
+                    (tipo.includes('IMPOSTOS') && tipo.includes('%')) ||
+                    tipo === '% DE IMPOSTOS' || tipo === '% IMPOSTOS') {
+                    dados.percentualImpostos = valores;
+                } else if (tipo.includes('PIS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.pis = valores;
+                } else if (tipo.includes('COFINS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.cofins = valores;
+                } else if (tipo.includes('ICMS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.icms = valores;
+                } else if (tipo.includes('FATURAMENTO') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.faturamento = valores;
+                }
+            }
+            
+            return dados;
+        }
+
+        function atualizarTabela2024(dados) {
+            atualizarTabela('tabela2024', dados);
+        }
+
+        function atualizarTabela2025(dados) {
+            atualizarTabela('tabela2025', dados);
+        }
+
+        function atualizarTabelaComparativa(dados) {
+            atualizarTabela('tabelaComparativa', dados);
+        }
+
+        function atualizarTabela(tableId, dados) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const tipo = row.querySelector('td strong')?.textContent.toUpperCase() || '';
+                const cells = row.querySelectorAll('td:not(:first-child):not(:last-child)');
+                
+                let valores = [];
+                if (tipo.includes('PIS')) valores = dados.pis || [];
+                else if (tipo.includes('COFINS')) valores = dados.cofins || [];
+                else if (tipo.includes('ICMS')) valores = dados.icms || [];
+                else if (tipo.includes('FATURAMENTO')) valores = dados.faturamento || [];
+                else if (tipo.includes('%') || tipo.includes('IMPOSTOS')) valores = dados.percentualImpostos || [];
+                
+                cells.forEach((cell, index) => {
+                    if (index < valores.length && valores[index] !== null && !isNaN(valores[index])) {
+                        if (tipo.includes('%') || (tipo.includes('IMPOSTOS') && tipo.includes('%'))) {
+                            // Formatar percentual com vírgula (formato brasileiro)
+                            const percentualFormatado = valores[index].toFixed(2).replace('.', ',') + '%';
+                            cell.textContent = percentualFormatado;
+                            cell.className = 'percentage';
+                            // Adicionar classe positiva/negativa se necessário
+                            if (valores[index] > 0) {
+                                cell.classList.add('positive');
+                            } else if (valores[index] < 0) {
+                                cell.classList.add('negative');
+                            }
+                        } else {
+                            cell.textContent = 'R$ ' + valores[index].toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            cell.className = 'currency';
+                        }
+                    } else if (index < valores.length && valores[index] === null) {
+                        cell.textContent = '-';
+                        cell.className = '';
+                    }
+                });
+            });
+        }
+
+        function atualizarGraficos() {
+            // Extrair dados das tabelas atualizadas
+            const dados2024 = extrairDadosDasTabelas('tabela2024');
+            const dados2025 = extrairDadosDasTabelas('tabela2025');
+            
+            atualizarGraficosComDados(dados2024, dados2025);
+        }
+
+        function atualizarGraficosComDados(dados2024, dados2025) {
+            // Atualizar KPIs sempre que possível
+            atualizarKPIs(dados2024, dados2025);
+            
+            if (dados2024 && dados2025) {
+                // Atualizar gráficos apenas se tiver dados válidos
+                if (dados2024.faturamento && dados2024.faturamento.length > 0 && 
+                    dados2025.faturamento && dados2025.faturamento.length > 0) {
+                    atualizarGraficoFaturamento(dados2024.faturamento, dados2025.faturamento);
+                }
+                
+                if (dados2024.percentualImpostos && dados2024.percentualImpostos.length > 0 && 
+                    dados2025.percentualImpostos && dados2025.percentualImpostos.length > 0) {
+                    atualizarGraficoImpostos(dados2024.percentualImpostos, dados2025.percentualImpostos);
+                }
+                
+                if (dados2024.pis && dados2024.pis.length > 0) {
+                    atualizarGraficoComposicao2024(dados2024);
+                }
+                
+                if (dados2025.pis && dados2025.pis.length > 0 && dados2025.cofins && dados2025.cofins.length > 0) {
+                    atualizarGraficoComposicao2025(dados2025);
+                }
+            }
+        }
+
+        function extrairDadosDasTabelas(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return null;
+            
+            const dados = {
+                pis: [],
+                cofins: [],
+                icms: [],
+                faturamento: [],
+                percentualImpostos: []
+            };
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const firstCell = row.querySelector('td');
+                if (!firstCell) return;
+                
+                const tipo = firstCell.querySelector('strong')?.textContent.toUpperCase().trim() || firstCell.textContent.toUpperCase().trim();
+                const cells = row.querySelectorAll('td:not(:first-child):not(:last-child)');
+                
+                const valores = Array.from(cells).map(cell => {
+                    const text = cell.textContent.trim();
+                    if (text === '#DIV/0!' || text === '-' || text === '' || text === null) return null;
+                    
+                    // Se for percentual, extrair o número mantendo como percentual (1.74 ao invés de 0.0174)
+                    const isPercent = (tipo.includes('%') || tipo.includes('IMPOSTOS')) || text.includes('%');
+                    let valor = parseBrazilianNumber(text, isPercent);
+                    
+                    // Se for linha de percentual e o valor for muito pequeno (< 0.1), pode ser que o Excel retornou como decimal
+                    // Exemplo: Excel retorna 0.0064 (que representa 0.64%) ou 0.0174 (que representa 1.74%)
+                    // Nesse caso, multiplicar por 100
+                    if (isPercent && valor !== null && valor < 0.1 && valor > 0) {
+                        valor = valor * 100;
+                    }
+                    
+                    return valor;
+                });
+                
+                // Identificar o tipo de linha de forma mais precisa
+                // Priorizar verificação de % DE IMPOSTOS primeiro
+                if ((tipo.includes('%') && tipo.includes('IMPOSTOS')) || 
+                    (tipo.includes('IMPOSTOS') && tipo.includes('%')) ||
+                    tipo === '% DE IMPOSTOS' || tipo === '% IMPOSTOS') {
+                    dados.percentualImpostos = valores;
+                } else if (tipo.includes('PIS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.pis = valores;
+                } else if (tipo.includes('COFINS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.cofins = valores;
+                } else if (tipo.includes('ICMS') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.icms = valores;
+                } else if (tipo.includes('FATURAMENTO') && !tipo.includes('%') && !tipo.includes('IMPOSTOS')) {
+                    dados.faturamento = valores;
+                }
+            });
+            
+            return dados;
+        }
+
+        function atualizarGraficoFaturamento(fat2024, fat2025) {
+            if (!faturamentoChart) {
+                criarGraficoFaturamento(fat2024, fat2025);
+                return;
+            }
+            
+            const mesesDisponiveis = Math.min(fat2024.length, fat2025.length, 12);
+            faturamentoChart.data.labels = meses2025.slice(0, mesesDisponiveis);
+            faturamentoChart.data.datasets[0].data = fat2024.slice(0, mesesDisponiveis);
+            faturamentoChart.data.datasets[1].data = fat2025.slice(0, mesesDisponiveis);
+            faturamentoChart.update();
+        }
+
+        function criarGraficoFaturamento(fat2024, fat2025) {
+            const mesesDisponiveis = Math.min(fat2024.length, fat2025.length, 12);
+            faturamentoChart = new Chart(document.getElementById('faturamentoChart'), {
+                type: 'line',
+                data: {
+                    labels: meses2025.slice(0, mesesDisponiveis),
+                    datasets: [{
+                        label: '2024',
+                        data: fat2024.slice(0, mesesDisponiveis),
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '2025',
+                        data: fat2025.slice(0, mesesDisponiveis),
+                        borderColor: 'rgb(118, 75, 162)',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoImpostos(imp2024, imp2025) {
+            if (!impostosChart) {
+                criarGraficoImpostos(imp2024, imp2025);
+                return;
+            }
+            
+            // Usar o tamanho máximo dos arrays (até 12 meses) para mostrar todos os meses no eixo X
+            const mesesDisponiveis = Math.min(Math.max(imp2024.length, imp2025.length), 12);
+            
+            if (mesesDisponiveis === 0) return;
+            
+            // Converter null para undefined para que o Chart.js não plote esses pontos
+            const imp2024Processado = imp2024.slice(0, mesesDisponiveis).map(v => (v !== null && !isNaN(v)) ? v : undefined);
+            const imp2025Processado = imp2025.slice(0, mesesDisponiveis).map(v => (v !== null && !isNaN(v)) ? v : undefined);
+            
+            impostosChart.data.labels = meses2025.slice(0, mesesDisponiveis);
+            impostosChart.data.datasets[0].data = imp2024Processado;
+            impostosChart.data.datasets[1].data = imp2025Processado;
+            impostosChart.update();
+        }
+
+        function criarGraficoImpostos(imp2024, imp2025) {
+            // Usar o tamanho máximo dos arrays (até 12 meses) para mostrar todos os meses no eixo X
+            const mesesDisponiveis = Math.min(Math.max(imp2024.length, imp2025.length), 12);
+            
+            if (mesesDisponiveis === 0) return;
+            
+            // Converter null para undefined para que o Chart.js não plote esses pontos
+            const imp2024Processado = imp2024.slice(0, mesesDisponiveis).map(v => (v !== null && !isNaN(v)) ? v : undefined);
+            const imp2025Processado = imp2025.slice(0, mesesDisponiveis).map(v => (v !== null && !isNaN(v)) ? v : undefined);
+            
+            impostosChart = new Chart(document.getElementById('impostosChart'), {
+                type: 'line',
+                data: {
+                    labels: meses2025.slice(0, mesesDisponiveis),
+                    datasets: [{
+                        label: '2024',
+                        data: imp2024Processado,
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '2025',
+                        data: imp2025Processado,
+                        borderColor: 'rgb(118, 75, 162)',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    // Formatar percentual com vírgula (formato brasileiro)
+                                    const valorFormatado = context.parsed.y.toFixed(2).replace('.', ',');
+                                    return context.dataset.label + ': ' + valorFormatado + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoComposicao2024(dados) {
+            if (!composicao2024Chart) {
+                criarGraficoComposicao2024(dados);
+                return;
+            }
+            
+            const mesesDisponiveis = Math.min(dados.pis.length, 12);
+            composicao2024Chart.data.labels = meses2025.slice(0, mesesDisponiveis);
+            composicao2024Chart.data.datasets[0].data = dados.pis.slice(0, mesesDisponiveis);
+            composicao2024Chart.data.datasets[1].data = dados.cofins.slice(0, mesesDisponiveis);
+            composicao2024Chart.data.datasets[2].data = dados.icms.slice(0, mesesDisponiveis);
+            composicao2024Chart.update();
+        }
+
+        function criarGraficoComposicao2024(dados) {
+            const mesesDisponiveis = Math.min(dados.pis.length, 12);
+            composicao2024Chart = new Chart(document.getElementById('composicao2024Chart'), {
+                type: 'bar',
+                data: {
+                    labels: meses2025.slice(0, mesesDisponiveis),
+                    datasets: [{
+                        label: 'PIS',
+                        data: dados.pis.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    }, {
+                        label: 'COFINS',
+                        data: dados.cofins.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                    }, {
+                        label: 'ICMS',
+                        data: dados.icms.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoComposicao2025(dados) {
+            if (!composicao2025Chart) {
+                criarGraficoComposicao2025(dados);
+                return;
+            }
+            
+            const mesesDisponiveis = Math.min(dados.pis.length, 12);
+            composicao2025Chart.data.labels = meses2025.slice(0, mesesDisponiveis);
+            composicao2025Chart.data.datasets[0].data = dados.pis.slice(0, mesesDisponiveis);
+            composicao2025Chart.data.datasets[1].data = dados.cofins.slice(0, mesesDisponiveis);
+            composicao2025Chart.data.datasets[2].data = dados.icms.slice(0, mesesDisponiveis);
+            composicao2025Chart.update();
+        }
+
+        function criarGraficoComposicao2025(dados) {
+            const mesesDisponiveis = Math.min(dados.pis.length, 12);
+            composicao2025Chart = new Chart(document.getElementById('composicao2025Chart'), {
+                type: 'bar',
+                data: {
+                    labels: meses2025.slice(0, mesesDisponiveis),
+                    datasets: [{
+                        label: 'PIS',
+                        data: dados.pis.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    }, {
+                        label: 'COFINS',
+                        data: dados.cofins.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                    }, {
+                        label: 'ICMS',
+                        data: dados.icms.slice(0, mesesDisponiveis),
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function atualizarKPIs(dados2024, dados2025) {
+            const mediaFat2024 = dados2024 ? calcularMedia(dados2024.faturamento) : 0;
+            const mediaFat2025 = dados2025 ? calcularMedia(dados2025.faturamento) : 0;
+            const mediaImp2024 = dados2024 ? calcularMedia(dados2024.percentualImpostos) : 0;
+            const mediaImp2025 = dados2025 ? calcularMedia(dados2025.percentualImpostos) : 0;
+            
+            document.getElementById('kpiFat2024').textContent = mediaFat2024 > 0 ? 'R$ ' + Math.round(mediaFat2024).toLocaleString('pt-BR') : '-';
+            document.getElementById('kpiFat2025').textContent = mediaFat2025 > 0 ? 'R$ ' + Math.round(mediaFat2025).toLocaleString('pt-BR') : '-';
+            // Formatar percentuais com vírgula (formato brasileiro)
+            document.getElementById('kpiImp2024').textContent = mediaImp2024 > 0 ? mediaImp2024.toFixed(2).replace('.', ',') + '%' : '-';
+            document.getElementById('kpiImp2025').textContent = mediaImp2025 > 0 ? mediaImp2025.toFixed(2).replace('.', ',') + '%' : '-';
+        }
+
+        function calcularMedia(valores) {
+            const validos = valores.filter(v => v !== null && !isNaN(v));
+            if (validos.length === 0) return 0;
+            return validos.reduce((a, b) => a + b, 0) / validos.length;
+        }
+
+        function mostrarStatus(mensagem, tipo) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = mensagem;
+            statusDiv.className = 'status-message status-' + tipo;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Event listener para upload de arquivo
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = 'Arquivo selecionado: ' + file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processarDadosExcel(workbook);
+                } catch (error) {
+                    mostrarStatus('Erro ao ler arquivo: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Os gráficos serão criados apenas após importação dos dados
+    </script>
+</body>
+</html>
+
