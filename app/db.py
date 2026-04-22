@@ -18,8 +18,21 @@ _pool: ConnectionPool | None = None
 MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 
 
-def init_pool(dsn: str, *, min_size: int = 1, max_size: int = 5) -> None:
-    """Cria o pool de conexões global. Chame uma vez na inicialização do app."""
+def init_pool(dsn: str, *, min_size: int = 0, max_size: int = 10) -> None:
+    """Cria o pool de conexões global. Chame uma vez na inicialização do app.
+
+    Configurado para funcionar com o Supabase Transaction Pooler (porta 6543),
+    que é um PgBouncer em modo transaction. Tem duas peculiaridades:
+
+    1. **Não suporta prepared statements** entre transações → usamos
+       ``prepare_threshold=None`` para desligar o cache automático do psycopg.
+       Sem isso, queries frequentes começam a dar erro/travamento após alguns
+       minutos de uso.
+
+    2. **Derruba conexões ociosas** silenciosamente → usamos ``max_idle``
+       curto e ``check=check_connection`` para validar conexões antes de
+       entregá-las à aplicação (evita PoolTimeout por conexões zumbis).
+    """
     global _pool
     if _pool is not None:
         return
@@ -30,10 +43,16 @@ def init_pool(dsn: str, *, min_size: int = 1, max_size: int = 5) -> None:
         conninfo=dsn,
         min_size=min_size,
         max_size=max_size,
-        kwargs={"row_factory": dict_row, "autocommit": False},
+        kwargs={
+            "row_factory": dict_row,
+            "autocommit": False,
+            "prepare_threshold": None,
+        },
+        max_idle=60.0,
+        max_lifetime=300.0,
+        check=ConnectionPool.check_connection,
         open=True,
     )
-    # Aguarda pool ficar pronto para capturar erros de conexão cedo.
     _pool.wait(timeout=10)
 
 
