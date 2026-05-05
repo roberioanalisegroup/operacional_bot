@@ -18,13 +18,17 @@ administrativo, e compensado de sobra pela estabilidade.
 """
 from __future__ import annotations
 
+import ipaddress
+import json
 import logging
 import socket
 import time
+import urllib.error
+import urllib.request
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse, urlunparse
 
 import psycopg
 from psycopg import Connection
@@ -44,13 +48,54 @@ MAX_ATTEMPTS = 3           # tentativas totais ao abrir conexão
 _supabase_ipv4_notice_logged = False
 
 
+def _ipv4_tcp(host: str, port: int) -> str | None:
+    try:
+        infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+    except OSError as err:
+        logger.debug("getaddrinfo(AF_INET) %s:%s — %s", host, port, err)
+        return None
+    if not infos:
+        return None
+    return infos[0][4][0]
+
+
+def _ipv4_public_dns_a(host: str) -> str | None:
+    """Registros A via DNS JSON público (o DNS do Render às vezes não expõe IPv4)."""
+    qname = quote(host, safe="")
+    urls = (
+        f"https://dns.google/resolve?name={qname}&type=A",
+        f"https://cloudflare-dns.com/dns-query?name={qname}&type=A",
+    )
+    for url in urls:
+        req = urllib.request.Request(url, headers={"Accept": "application/dns-json"})
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                payload = json.loads(resp.read().decode())
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError) as err:
+            logger.warning("DNS JSON (%s) para %s: %s", url.split("/")[2], host, err)
+            continue
+        if payload.get("Status") != 0:
+            continue
+        for ans in payload.get("Answer", []):
+            if ans.get("type") != 1:
+                continue
+            raw = str(ans.get("data", "")).strip().strip('"').split()[0]
+            if not raw:
+                continue
+            try:
+                ipaddress.IPv4Address(raw)
+            except ValueError:
+                continue
+            return raw
+    return None
+
+
 def _effective_dsn(dsn: str) -> str:
     """Para ``db.*.supabase.co`` adiciona ``hostaddr`` com IPv4.
 
     Hospedagens como o Render frequentemente não têm rota IPv6 de saída; o DNS
-    do Supabase pode devolver só AAAA e o connect falha com "Network is
-    unreachable". O libpq usa ``hostaddr`` para o TCP e mantém ``host`` na URI
-    para verificação TLS (certificado em ``*.supabase.co``).
+    local pode omitir registros A. O libpq usa ``hostaddr`` para o TCP e mantém
+    ``host`` na URI para verificação TLS (certificado em ``*.supabase.co``).
     """
     global _supabase_ipv4_notice_logged
     try:
@@ -64,28 +109,28 @@ def _effective_dsn(dsn: str) -> str:
     if any(k.lower() == "hostaddr" for k in q):
         return dsn
     port = parsed.port or 5432
-    try:
-        infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
-    except OSError as err:
-        logger.warning(
-            "Não foi possível resolver %s em IPv4 (%s); usando DSN sem hostaddr.",
-            host,
-            err,
+    ipv4_sys = _ipv4_tcp(host, port)
+    ipv4 = ipv4_sys or _ipv4_public_dns_a(host)
+    if not ipv4:
+        raise RuntimeError(
+            f"Não foi possível obter IPv4 para o host Supabase {host!r}. "
+            "Em servidores sem rota IPv6 (ex.: Render), use a connection string de "
+            "**Transaction pooling** (porta **6543**) em DATABASE_URL: Supabase → "
+            "Project Settings → Database → Connection string (modo Transaction; "
+            "copie host e usuário `postgres.<project_ref>` exatamente como no painel)."
         )
-        return dsn
-    if not infos:
-        return dsn
-    ipv4 = infos[0][4][0]
     q["hostaddr"] = [ipv4]
     new_query = urlencode(q, doseq=True)
     out = urlunparse(
         (parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment)
     )
     if not _supabase_ipv4_notice_logged:
+        src = "resolver local" if ipv4_sys else "DNS público (Google/Cloudflare)"
         logger.info(
-            "Supabase conexão direta: usando hostaddr=%s para host=%s (IPv4; evita IPv6 sem rota).",
+            "Supabase conexão direta: hostaddr=%s para host=%s (%s; IPv4 no Render).",
             ipv4,
             host,
+            src,
         )
         _supabase_ipv4_notice_logged = True
     return out
