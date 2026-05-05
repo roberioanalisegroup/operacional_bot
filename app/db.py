@@ -19,10 +19,12 @@ administrativo, e compensado de sobra pela estabilidade.
 from __future__ import annotations
 
 import logging
+import socket
 import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import psycopg
 from psycopg import Connection
@@ -39,6 +41,55 @@ CONNECT_TIMEOUT = 10       # segundos para estabelecer conexão TCP+TLS
 STATEMENT_TIMEOUT_MS = 15_000  # teto de 15s por query (corta queries travadas)
 MAX_ATTEMPTS = 3           # tentativas totais ao abrir conexão
 
+_supabase_ipv4_notice_logged = False
+
+
+def _effective_dsn(dsn: str) -> str:
+    """Para ``db.*.supabase.co`` adiciona ``hostaddr`` com IPv4.
+
+    Hospedagens como o Render frequentemente não têm rota IPv6 de saída; o DNS
+    do Supabase pode devolver só AAAA e o connect falha com "Network is
+    unreachable". O libpq usa ``hostaddr`` para o TCP e mantém ``host`` na URI
+    para verificação TLS (certificado em ``*.supabase.co``).
+    """
+    global _supabase_ipv4_notice_logged
+    try:
+        parsed = urlparse(dsn)
+    except Exception:
+        return dsn
+    host = (parsed.hostname or "").lower()
+    if not host.startswith("db.") or not host.endswith(".supabase.co"):
+        return dsn
+    q = parse_qs(parsed.query, keep_blank_values=True)
+    if any(k.lower() == "hostaddr" for k in q):
+        return dsn
+    port = parsed.port or 5432
+    try:
+        infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+    except OSError as err:
+        logger.warning(
+            "Não foi possível resolver %s em IPv4 (%s); usando DSN sem hostaddr.",
+            host,
+            err,
+        )
+        return dsn
+    if not infos:
+        return dsn
+    ipv4 = infos[0][4][0]
+    q["hostaddr"] = [ipv4]
+    new_query = urlencode(q, doseq=True)
+    out = urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment)
+    )
+    if not _supabase_ipv4_notice_logged:
+        logger.info(
+            "Supabase conexão direta: usando hostaddr=%s para host=%s (IPv4; evita IPv6 sem rota).",
+            ipv4,
+            host,
+        )
+        _supabase_ipv4_notice_logged = True
+    return out
+
 
 def init_pool(dsn: str, *, min_size: int = 0, max_size: int = 0) -> None:
     """Mantém o nome ``init_pool`` por compatibilidade com ``app/__init__.py``.
@@ -54,7 +105,8 @@ def init_pool(dsn: str, *, min_size: int = 0, max_size: int = 0) -> None:
     if not dsn:
         raise RuntimeError("DATABASE_URL não definida.")
     logger.info("Testando conexão com o Postgres (sem pool).")
-    with psycopg.connect(dsn, connect_timeout=CONNECT_TIMEOUT) as probe:
+    effective = _effective_dsn(dsn)
+    with psycopg.connect(effective, connect_timeout=CONNECT_TIMEOUT) as probe:
         with probe.cursor() as cur:
             cur.execute("SELECT 1")
     _dsn = dsn
@@ -74,7 +126,7 @@ def _open_connection() -> Connection:
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             conn = psycopg.connect(
-                _dsn,
+                _effective_dsn(_dsn),
                 row_factory=dict_row,
                 autocommit=False,
                 connect_timeout=CONNECT_TIMEOUT,
