@@ -34,7 +34,7 @@ instance/
 .webassets-cache
 
 # Gerado no deploy Vercel (cópia de static/ → public/; não versionar)
-/public/
+# /public/  (removido do ignore para que o Vercel possa servir os arquivos sanitizados diretamente)
 
 # --- Editores / SO ---
 .vscode/

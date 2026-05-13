@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/assets/logo-analise-group.png" type="image/png">
+  <title>Central de Setores</title>
+  <meta name="auth-root" content="/">
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/auth-guard.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b0b;
+      --panel: #141414;
+      --panel-strong: #1c1c1c;
+      --panel-border: #2d2d2d;
+      --text: #f5f1e8;
+      --muted: #b8b0a4;
+      --brand-gold: #e9af29;
+      --brand-soft: rgba(233, 175, 41, 0.12);
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.18), transparent 24%),
+        linear-gradient(180deg, #050505 0%, var(--bg) 280px);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.98) 0%, rgba(17, 17, 17, 0.94) 62%, rgba(233, 175, 41, 0.88) 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(233, 175, 41, 0.22);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 8px 14px 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-chip img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(233, 175, 41, 0.2));
+    }
+
+    .brand-chip span {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1,
+    .hero p,
+    .stats {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.95rem, 3vw, 3rem);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 780px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      min-width: 180px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(6px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.92rem;
+    }
+
+    .section-title {
+      margin: 30px 0 14px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f4e1ab;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .section-title::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 4px;
+      border-radius: 999px;
+      background: var(--brand-gold);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel-strong) 0%, var(--panel) 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 250px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-self: flex-start;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: #f3cb70;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.18rem;
+      line-height: 1.35;
+      color: #ffffff;
+    }
+
+    .card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 1;
+    }
+
+    .action {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 14px;
+      text-decoration: none;
+      color: #fff7df;
+      background: #1b1b1b;
+      border: 1px solid rgba(233, 175, 41, 0.32);
+      border-radius: 12px;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(233, 175, 41, 0.18);
+      border-color: var(--brand-gold);
+      background: #222222;
+    }
+
+    .action small {
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .arrow {
+      margin-left: 12px;
+      color: var(--brand-gold);
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #111111;
+      border: 1px solid rgba(233, 175, 41, 0.2);
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .footer-note strong {
+      color: #f3cb70;
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 20px 14px 32px; }
+      .hero, .card { padding: 20px; }
+      .action { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="brand-chip">
+        <img src="/assets/logo-analise-group.png" alt="Logo da Análise Group">
+        <span>Análise Group</span>
+      </div>
+      <h1>Central de Setores</h1>
+      <p>
+        Escolha o setor desejado para acessar os painéis e automações da empresa.
+        O setor fiscal já está estruturado com as automações disponíveis.
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          <strong>3</strong>
+          <span>setores organizados</span>
+        </div>
+        <div class="stat">
+          <strong>1</strong>
+          <span>setor com automações ativas</span>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Setores disponíveis</h2>
+    <section class="cards" aria-label="Lista de setores">
+      <article class="card">
+        <span class="tag">Setor Fiscal</span>
+        <h2>Área do Setor Fiscal</h2>
+        <p>
+          Acesso ao painel fiscal completo com as automações já organizadas dentro da pasta do setor.
+        </p>
+        <a class="action" href="/setor-fiscal/index.html">
+          <span>
+            Abrir Setor Fiscal
+            <small>Painel com as automações já cadastradas</small>
+          </span>
+          <span class="arrow">Abrir</span>
+        </a>
+      </article>
+
+      <article class="card">
+        <span class="tag">Setor Pessoal</span>
+        <h2>Área do Setor Pessoal</h2>
+        <p>
+          Pasta preparada para receber os HTMLs e automações do setor pessoal conforme você for adicionando.
+        </p>
+        <a class="action" href="/setor-pessoal/index.html">
+          <span>
+            Abrir Setor Pessoal
+            <small>Estrutura pronta para novas automações</small>
+          </span>
+          <span class="arrow">Abrir</span>
+        </a>
+      </article>
+
+      <article class="card">
+        <span class="tag">Setor Contábil</span>
+        <h2>Área do Setor Contábil</h2>
+        <p>
+          Pasta preparada para centralizar os HTMLs e ferramentas do setor contábil quando você quiser incluir.
+        </p>
+        <a class="action" href="/setor-contabil/index.html">
+          <span>
+            Abrir Setor Contábil
+            <small>Base pronta para expansão futura</small>
+          </span>
+          <span class="arrow">Abrir</span>
+        </a>
+      </article>
+    </section>
+
+    <div class="footer-note">
+      <strong>Estrutura física organizada por setor.</strong>
+      Cada pasta de setor pode ter seus próprios HTMLs e um painel interno separado.
+    </div>
+  </main>
+</body>
+</html>

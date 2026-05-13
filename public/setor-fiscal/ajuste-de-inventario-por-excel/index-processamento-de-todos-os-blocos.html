@@ -1,0 +1,475 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="auth-root" content="/" />
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/auth-guard.js"></script>
+    <title>Ajuste de Inventário (H010)</title>
+    <style>
+      :root {
+        --bg: #090909;
+        --panel: rgba(255, 255, 255, 0.05);
+        --border: rgba(233, 175, 41, 0.18);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 245, 224, 0.72);
+        --accent: #e9af29;
+        --ok: #89d47d;
+        --warn: #ffcc66;
+        --err: #ff5c73;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(900px 500px at 20% 0%, rgba(233, 175, 41, 0.14), transparent 60%),
+          radial-gradient(800px 500px at 90% 10%, rgba(233, 175, 41, 0.1), transparent 60%),
+          var(--bg);
+      }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 26px 16px 60px; }
+      header { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+      h1 { font-size: 20px; margin: 0; letter-spacing: 0.2px; }
+      .sub { margin: 0; font-size: 13px; color: var(--muted); }
+      .brand-topbar {
+        display: inline-flex; align-items: center; gap: 12px;
+        padding: 8px 14px 8px 10px; border-radius: 999px;
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      }
+      .brand-topbar img {
+        width: 28px; height: 28px; object-fit: contain; display: block;
+        filter: drop-shadow(0 4px 12px rgba(233,175,41,0.22));
+      }
+      .brand-topbar span {
+        font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      }
+      .home-button {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 14px; border-radius: 12px;
+        border: 1px solid var(--border); background: rgba(0,0,0,0.24);
+        color: var(--text); text-decoration: none; font-weight: 700;
+      }
+      .home-button .icon { color: var(--accent); font-size: 14px; line-height: 1; }
+      .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+      @media (min-width: 980px) { .grid { grid-template-columns: 420px 1fr; } }
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+      .hd { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 10px; }
+      .title { margin: 0; font-weight: 700; font-size: 13px; color: rgba(255,255,255,0.86); }
+      .pill { font-family: var(--mono); font-size: 12px; padding: 6px 9px; border-radius: 999px; border: 1px solid var(--border); color: rgba(255,255,255,0.78); }
+      .bd { padding: 14px; }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      input[type="file"], input[type="text"] {
+        width: 100%; padding: 10px 12px; border-radius: 12px;
+        border: 1px solid var(--border); background: rgba(0,0,0,0.22); color: var(--text);
+        outline: none;
+      }
+      input::placeholder { color: rgba(255,255,255,0.40); }
+      .help { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.56); line-height: 1.35; }
+      .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      button {
+        border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+        color: var(--text); padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700;
+      }
+      button.primary { border-color: rgba(233,175,41,0.42); background: rgba(233,175,41,0.18); }
+      button:disabled { opacity: 0.55; cursor: not-allowed; }
+      .status { font-family: var(--mono); font-size: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.20); white-space: pre-wrap; }
+      .status.ok { border-color: rgba(47,227,163,0.35); }
+      .status.warn { border-color: rgba(255,204,102,0.35); }
+      .status.err { border-color: rgba(255,92,115,0.38); }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 10px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+      th { color: rgba(255,255,255,0.78); font-size: 12px; letter-spacing: 0.2px; }
+      td.num { font-family: var(--mono); text-align: right; }
+      .muted { color: var(--muted); }
+      .k { font-family: var(--mono); }
+      .note { margin-top: 10px; color: rgba(255,255,255,0.58); font-size: 12px; line-height: 1.35; }
+      .footer { margin-top: 14px; font-size: 12px; color: rgba(255,255,255,0.56); }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand-topbar">
+          <img src="/assets/logo-analise-group.png" alt="Logo da Análise Group" />
+          <span>Análise Group</span>
+        </div>
+        <a class="home-button" href="../../index.html"><span class="icon">&#8962;</span><span>Menu Inicial</span></a>
+        <h1>Ajuste de Inventário — aba <span class="k">H010</span></h1>
+        <p class="sub">Upload do Excel → validações → ajuste fiscal (J/K/L/Q) → resumo gerencial → download</p>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <div class="hd">
+            <p class="title">Entrada</p>
+            <span class="pill">offline • no navegador</span>
+          </div>
+          <div class="bd">
+            <div class="field">
+              <label for="file">Arquivo Excel (.xlsx)</label>
+              <input id="file" type="file" accept=".xlsx" />
+              <div class="help">
+                A ferramenta trabalha <b>exclusivamente</b> na aba <span class="k">H010</span>.
+                Colunas fixas: J=QTD, K=VL_UNIT, L=VL_ITEM, Q=VL_ITEM_IR.
+              </div>
+            </div>
+
+            <div style="height: 10px"></div>
+
+            <div class="field">
+              <label for="pct">Fator multiplicador para aplicar em <span class="k">VL_UNIT</span> (coluna K)</label>
+              <input id="pct" type="text" placeholder="Ex.: 1,35" />
+              <div class="help">Aceita vírgula ou ponto. Ex.: <span class="k">1,35</span> = +35% (multiplica por 1,35).</div>
+            </div>
+
+            <div class="btns">
+              <button id="process" class="primary" disabled>Processar</button>
+              <button id="download" disabled>Baixar arquivo ajustado</button>
+              <button id="reset">Limpar</button>
+            </div>
+
+            <div style="height: 10px"></div>
+            <div id="status" class="status warn">Aguardando arquivo e percentual.</div>
+            <div class="note">
+              Linhas inválidas são ignoradas: quantidade ≤ 0, valores nulos/não numéricos, células com fórmula em J/K.
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="hd">
+            <p class="title">Controle gerencial</p>
+            <span class="pill">antes • depois • diferença</span>
+          </div>
+          <div class="bd">
+            <table aria-label="Resumo gerencial">
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th class="num">Valor</th>
+                </tr>
+              </thead>
+              <tbody id="summary">
+                <tr><td class="muted">Total antes (VL_ITEM)</td><td class="num k">—</td></tr>
+                <tr><td class="muted">Total depois (VL_ITEM)</td><td class="num k">—</td></tr>
+                <tr><td class="muted">Diferença (R$)</td><td class="num k">—</td></tr>
+                <tr><td class="muted">Diferença real no total (%)</td><td class="num k">—</td></tr>
+                <tr><td class="muted">Linhas ajustadas</td><td class="num k">—</td></tr>
+                <tr><td class="muted">Linhas ignoradas</td><td class="num k">—</td></tr>
+              </tbody>
+            </table>
+            <div class="footer">
+              Lib usada: <a href="https://sheetjs.com/" target="_blank" rel="noreferrer">SheetJS</a> (leitura/escrita Excel no browser).
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/big.js@6.2.1/big.min.js"></script>
+    <script>
+      const SHEET_NAME = "H010";
+      // Colunas (0-based no SheetJS): J=9, K=10, L=11, Q=16
+      const COL_QTD = 9;
+      const COL_VL_UNIT = 10;
+      const COL_VL_ITEM = 11;
+      const COL_VL_ITEM_IR = 16;
+
+      const fileEl = document.getElementById("file");
+      const pctEl = document.getElementById("pct");
+      const processBtn = document.getElementById("process");
+      const downloadBtn = document.getElementById("download");
+      const resetBtn = document.getElementById("reset");
+      const statusEl = document.getElementById("status");
+      const summaryBody = document.getElementById("summary");
+
+      let inputFile = null;
+      let processed = null; // { wb, outName, totals... }
+
+      function setStatus(kind, msg) {
+        statusEl.classList.remove("ok", "warn", "err");
+        statusEl.classList.add(kind);
+        statusEl.textContent = msg;
+      }
+
+      function fmtMoney(n) {
+        if (!isFinite(n)) return "—";
+        return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      }
+
+      function fmtPct(n) {
+        if (!isFinite(n)) return "—";
+        return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+      }
+
+      function fmtInt(n) {
+        if (!isFinite(n)) return "—";
+        return Math.trunc(n).toLocaleString("pt-BR");
+      }
+
+      // Fator multiplicador: 1,35 / 1.35 / 0,97 etc.
+      function parseFactor(text) {
+        const raw = (text || "").trim();
+        if (!raw) return null;
+        const normalized = raw.replace(/\s/g, "").replace(",", ".");
+        try {
+          const b = new Big(normalized);
+          if (b.lte(0)) return null;
+          return b;
+        } catch {
+          return null;
+        }
+      }
+
+      function cellAddr(r, c) {
+        return XLSX.utils.encode_cell({ r, c });
+      }
+
+      function getCell(ws, r, c) {
+        return ws[cellAddr(r, c)];
+      }
+
+      function setNumber(ws, r, c, v) {
+        const addr = cellAddr(r, c);
+        ws[addr] = { t: "n", v: v };
+      }
+
+      function hasFormula(cell) {
+        return cell && typeof cell.f === "string" && cell.f.length > 0;
+      }
+
+      function numFromCell(cell) {
+        if (!cell) return null;
+        if (hasFormula(cell)) return null;
+        if (cell.t === "n" && isFinite(cell.v)) return Number(cell.v);
+        if (cell.t === "s" || cell.t === "str") {
+          const s = String(cell.v ?? "").trim();
+          if (!s) return null;
+          const normalized = s.replace(/\./g, "").replace(",", ".");
+          const n = Number(normalized);
+          return isFinite(n) ? n : null;
+        }
+        return null;
+      }
+
+      function updateSummary(s) {
+        const rows = [
+          ["Total antes (VL_ITEM)", fmtMoney(s.totalBefore)],
+          ["Total depois (VL_ITEM)", fmtMoney(s.totalAfter)],
+          ["Diferença (R$)", fmtMoney(s.diffValue)],
+          ["Diferença real no total (%)", fmtPct(s.diffPct)],
+          ["Linhas ajustadas", fmtInt(s.rowsAdjusted)],
+          ["Linhas ignoradas", fmtInt(s.rowsSkipped)],
+        ];
+        summaryBody.innerHTML = "";
+        for (const [k, v] of rows) {
+          const tr = document.createElement("tr");
+          const td1 = document.createElement("td");
+          td1.textContent = k;
+          const td2 = document.createElement("td");
+          td2.className = "num k";
+          td2.textContent = v;
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          summaryBody.appendChild(tr);
+        }
+      }
+
+      function enableIfReady() {
+        const factor = parseFactor(pctEl.value);
+        processBtn.disabled = !(inputFile && factor !== null);
+      }
+
+      fileEl.addEventListener("change", () => {
+        inputFile = fileEl.files && fileEl.files[0] ? fileEl.files[0] : null;
+        processed = null;
+        downloadBtn.disabled = true;
+        updateSummary({
+          totalBefore: NaN,
+          totalAfter: NaN,
+          diffValue: NaN,
+          diffPct: NaN,
+          rowsAdjusted: NaN,
+          rowsSkipped: NaN,
+        });
+        if (inputFile) {
+          setStatus("warn", `Arquivo selecionado: ${inputFile.name}\nInforme o percentual e clique em Processar.`);
+        } else {
+          setStatus("warn", "Aguardando arquivo e percentual.");
+        }
+        enableIfReady();
+      });
+
+      pctEl.addEventListener("input", enableIfReady);
+
+      resetBtn.addEventListener("click", () => {
+        fileEl.value = "";
+        pctEl.value = "";
+        inputFile = null;
+        processed = null;
+        processBtn.disabled = true;
+        downloadBtn.disabled = true;
+        updateSummary({
+          totalBefore: NaN,
+          totalAfter: NaN,
+          diffValue: NaN,
+          diffPct: NaN,
+          rowsAdjusted: NaN,
+          rowsSkipped: NaN,
+        });
+        setStatus("warn", "Aguardando arquivo e percentual.");
+      });
+
+      processBtn.addEventListener("click", async () => {
+        const factor = parseFactor(pctEl.value);
+        if (!inputFile || factor === null) {
+          setStatus("err", "Selecione um arquivo e informe um fator válido (ex.: 1,35).");
+          return;
+        }
+
+        try {
+          setStatus("warn", "Lendo arquivo Excel…");
+          const buf = await inputFile.arrayBuffer();
+          const wb = XLSX.read(buf, { type: "array", cellFormula: true, cellNF: true, cellStyles: true });
+
+          if (!wb.SheetNames.includes(SHEET_NAME)) {
+            setStatus("err", `ERRO: a aba obrigatória "${SHEET_NAME}" não existe.\nAbas encontradas: ${wb.SheetNames.join(", ")}`);
+            return;
+          }
+
+          const ws = wb.Sheets[SHEET_NAME];
+          if (!ws["!ref"]) {
+            setStatus("err", `ERRO: a aba "${SHEET_NAME}" está vazia (sem диапазон/!ref).`);
+            return;
+          }
+
+          const range = XLSX.utils.decode_range(ws["!ref"]);
+          if (range.e.c < COL_VL_UNIT) {
+            setStatus("err", `ERRO: colunas obrigatórias ausentes. Precisa ter pelo menos J (QTD) e K (VL_UNIT).`);
+            return;
+          }
+
+          // Detecta cabeçalho simples: primeira linha com texto em J/K
+          let startRow = range.s.r;
+          const j0 = getCell(ws, startRow, COL_QTD);
+          const k0 = getCell(ws, startRow, COL_VL_UNIT);
+          const looksHeader =
+            (j0 && (j0.t === "s" || j0.t === "str")) ||
+            (k0 && (k0.t === "s" || k0.t === "str"));
+          if (looksHeader) startRow = startRow + 1;
+
+          const UNIT_PLACES = 6;
+          const TOTAL_PLACES = 2;
+
+          let rowsAdjusted = 0;
+          let rowsSkipped = 0;
+          // Aritmética decimal exata (evita erros de float)
+          Big.DP = 40;
+          Big.RM = 1; // roundHalfUp
+          let totalBefore = new Big(0);
+          let totalAfter = new Big(0);
+
+          let hasAnyNumericJ = false;
+          let hasAnyNumericK = false;
+
+          function bigFromCell(cell) {
+            const n = numFromCell(cell);
+            if (n === null) return null;
+            try {
+              return new Big(String(n));
+            } catch {
+              return null;
+            }
+          }
+
+          for (let r = startRow; r <= range.e.r; r++) {
+            const cQtd = getCell(ws, r, COL_QTD);
+            const cUnit = getCell(ws, r, COL_VL_UNIT);
+            const qtd = bigFromCell(cQtd);
+            const unit = bigFromCell(cUnit);
+
+            if (qtd !== null) hasAnyNumericJ = true;
+            if (unit !== null) hasAnyNumericK = true;
+
+            // Linhas inválidas (obrigatórias)
+            if (qtd === null || unit === null) { rowsSkipped++; continue; }
+            if (qtd.lte(0)) { rowsSkipped++; continue; }
+
+            // Total antes (padronizado): recalcula por regra fiscal com arredondamento por linha
+            const oldTotal = qtd.times(unit).round(TOTAL_PLACES);
+            totalBefore = totalBefore.plus(oldTotal);
+
+            // Ajuste conforme regra
+            const newUnit = unit.times(factor).round(UNIT_PLACES);
+            const newTotal = qtd.times(newUnit).round(TOTAL_PLACES);
+
+            setNumber(ws, r, COL_VL_UNIT, parseFloat(newUnit.toString()));      // K
+            setNumber(ws, r, COL_VL_ITEM, parseFloat(newTotal.toString()));     // L
+            setNumber(ws, r, COL_VL_ITEM_IR, parseFloat(newTotal.toString()));  // Q
+
+            totalAfter = totalAfter.plus(newTotal);
+            rowsAdjusted++;
+          }
+
+          if (!hasAnyNumericJ || !hasAnyNumericK) {
+            setStatus("err", `ERRO: colunas J (QTD) e/ou K (VL_UNIT) não possuem dados numéricos válidos para processar.`);
+            return;
+          }
+
+          const diffValue = totalAfter.minus(totalBefore);
+          const diffPct = !totalBefore.eq(0) ? diffValue.div(totalBefore).times(100) : null;
+
+          const outName = inputFile.name.replace(/\.xlsx$/i, "") + `_AJUSTADO_${new Date().toISOString().slice(0,19).replace(/[-:T]/g,"")}.xlsx`;
+          processed = {
+            wb,
+            outName,
+            summary: {
+              totalBefore: parseFloat(totalBefore.toString()),
+              totalAfter: parseFloat(totalAfter.toString()),
+              diffValue: parseFloat(diffValue.toString()),
+              diffPct: diffPct ? parseFloat(diffPct.toString()) : NaN,
+              rowsAdjusted,
+              rowsSkipped,
+            },
+          };
+
+          updateSummary(processed.summary);
+          downloadBtn.disabled = false;
+
+          setStatus(
+            "ok",
+            "Processamento concluído.\n" +
+              `Aba: ${SHEET_NAME}\n` +
+              `Fator aplicado em K (VL_UNIT): ${factor.toString()}\n` +
+              `Linhas ajustadas: ${rowsAdjusted}\n` +
+              `Linhas ignoradas: ${rowsSkipped}\n` +
+              "Clique em “Baixar arquivo ajustado”."
+          );
+        } catch (e) {
+          setStatus("err", "ERRO inesperado ao processar: " + (e && e.message ? e.message : String(e)));
+        }
+      });
+
+      downloadBtn.addEventListener("click", () => {
+        if (!processed) return;
+        const out = XLSX.write(processed.wb, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = processed.outName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      });
+    </script>
+  </body>
+</html>
+

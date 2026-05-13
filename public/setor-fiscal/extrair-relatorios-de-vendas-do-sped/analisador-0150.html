@@ -1,0 +1,679 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="auth-root" content="/">
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/auth-guard.js"></script>
+  <title>Analisador 0150 + C100 - EFD ICMS</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.16), transparent 24%),
+        #0b0b0b;
+      color: #f5f1e8;
+    }
+    .brand-topbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 8px 14px 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(233,175,41,0.18);
+    }
+    .brand-topbar img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(233,175,41,0.2));
+    }
+    .brand-topbar span {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .home-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(233,175,41,0.24);
+      background: rgba(0,0,0,0.22);
+      color: #fff7df;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .home-button .icon {
+      color: #e9af29;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    h1 { color: #f5f1e8; margin-bottom: 8px; }
+    .subtitle { color: #b7ae9f; margin-bottom: 24px; }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-import { background: #e9af29; color: #17120a; }
+    .btn-import:hover { background: #f0ba42; }
+    .btn-export { background: #2d2d2d; color: #f5f1e8; }
+    .btn-export:hover { background: #383838; }
+    .btn-export:disabled { background: #a0aec0; cursor: not-allowed; }
+    input[type="file"] { display: none; }
+    .table-wrap {
+      overflow-x: auto;
+      background: #141414;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #191919;
+      color: #f3cb70;
+      padding: 12px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    td { padding: 10px; border-bottom: 1px solid #2f2a22; color: #f5f1e8; }
+    tr:hover { background: #1b1b1b; }
+    tr.row-client { background: #1a1a1a; font-weight: 600; }
+    tr.row-client:hover { background: #242424; }
+    tr.row-note td:first-child { padding-left: 24px; }
+    .empty-state { text-align: center; padding: 48px 24px; color: #b7ae9f; }
+    .count { font-weight: 600; color: #f5f1e8; margin-bottom: 8px; }
+    .filter-info { font-size: 12px; color: #b7ae9f; margin-bottom: 8px; }
+    .btn-pdf { background: #8d2f2f; color: white; }
+    .btn-pdf:hover { background: #9b2c2c; }
+    .btn-pdf:disabled { background: #a0aec0; cursor: not-allowed; }
+    .btn-excel-cad { background: #36304a; color: white; }
+    .btn-excel-cad:hover { background: #443a5f; }
+    .btn-cruzamento { background: #e9af29; color: #17120a; }
+    .btn-cruzamento:hover { background: #f0ba42; color: #17120a; }
+    .btn-cruzamento:disabled { background: #a0aec0; color: #718096; cursor: not-allowed; }
+    .progress-wrap {
+      display: none;
+      margin: 12px 0;
+      max-width: 480px;
+    }
+    .progress-wrap.active { display: block; }
+    .progress-label {
+      font-size: 13px;
+      color: #f5f1e8;
+      margin-bottom: 6px;
+    }
+    .progress-bar-bg {
+      height: 24px;
+      background: #202020;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #e9af29, #f0ba42);
+      border-radius: 12px;
+      transition: width 0.2s ease;
+    }
+    .progress-pct { font-size: 12px; color: #b7ae9f; margin-top: 4px; }
+    td.total-cell, .col-valor { text-align: right; white-space: nowrap; }
+    .filtro-faturamento {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      background: #141414;
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+    }
+    .filtro-faturamento label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #f5f1e8;
+    }
+    .filtro-faturamento input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #e9af29;
+    }
+    .filtro-faturamento .titulo-filtro {
+      font-weight: 600;
+      color: #f3cb70;
+      margin-right: 8px;
+    }
+    @media print {
+      body { background: #fff; padding: 12px; max-width: none; }
+      .toolbar, .no-print { display: none !important; }
+      .table-wrap { box-shadow: none; border: 1px solid #e2e8f0; }
+      .count { margin-bottom: 8px; }
+      table { font-size: 11px; }
+      th, td { padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="brand-topbar no-print">
+    <img src="/assets/logo-analise-group.png" alt="Logo da Análise Group">
+    <span>Análise Group</span>
+  </div>
+  <a class="home-button no-print" href="../../index.html">
+    <span class="icon">&#8962;</span>
+    <span>Menu Inicial</span>
+  </a>
+  <h1>Analisador 0150 + C100 – EFD ICMS</h1>
+  <p class="subtitle">Importe um arquivo SPED: apenas participantes com CPF (0150) e notas C100. Totalizador por cliente/fornecedor.</p>
+
+  <div class="toolbar no-print">
+    <input type="file" id="fileInput" accept=".txt,.sped,.xml">
+    <button type="button" class="btn btn-import" id="btnImport">Importar SPED</button>
+    <input type="file" id="excelCadastralInput" accept=".xlsx,.xls">
+    <button type="button" class="btn btn-excel-cad" id="btnExcelCad" title="Excel modelo: C=CPF, D=Nome, E=Endereço, F=Bairro, G=CEP, H=Município, I=UF, J=Telefone">Importar Excel cadastral</button>
+    <button type="button" class="btn btn-cruzamento" id="btnCruzamento" disabled title="Cruza os dados do Excel com os participantes do SPED">Iniciar cruzamento</button>
+    <button type="button" class="btn btn-export" id="btnExport" disabled>Exportar Excel</button>
+    <button type="button" class="btn btn-pdf" id="btnPdf" disabled>Exportar PDF</button>
+  </div>
+  <div class="filtro-faturamento no-print" id="filtroFaturamento" style="display: none;">
+    <span class="titulo-filtro">Filtrar faturamento (Saídas) por cliente:</span>
+    <label><input type="radio" name="filtroFat" value="total" checked> 1 – Faturamento total</label>
+    <label><input type="radio" name="filtroFat" value="ate_12000"> 2 – Até R$ 12.000,00</label>
+    <label><input type="radio" name="filtroFat" value="acima_12000"> 3 – Acima de R$ 12.000,00</label>
+  </div>
+  <div class="count no-print" id="excelCadastralStatus" style="font-size:12px;color:#4a5568;margin-bottom:4px;"></div>
+  <div class="progress-wrap no-print" id="progressWrap">
+    <div class="progress-label" id="progressLabel">Cruzando informações...</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div class="table-wrap" id="areaPDF">
+    <table id="table">
+      <thead>
+        <tr>
+          <th>3 Nome</th>
+          <th>6 CPF</th>
+          <th>9 Endereço</th>
+          <th>10 Número</th>
+          <th>11 Complemento</th>
+          <th>12 Bairro</th>
+          <th>Município</th>
+          <th>CEP</th>
+          <th>Telefone</th>
+          <th>Número da Nota</th>
+          <th>Data (DT_DOC)</th>
+          <th>Valor da NF (VL_DOC)</th>
+          <th>Saídas (total)</th>
+          <th>Entradas (total)</th>
+          <th>Saldo Final</th>
+          <th>Chave NF-e (CHV_NFE)</th>
+          <th>CFOPs (C190)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState">Importe um arquivo SPED para listar os registros 0150.</div>
+  </div>
+
+  <script>
+    (function () {
+      const fileInput = document.getElementById('fileInput');
+      const btnImport = document.getElementById('btnImport');
+      const btnExport = document.getElementById('btnExport');
+      const btnPdf = document.getElementById('btnPdf');
+      const btnExcelCad = document.getElementById('btnExcelCad');
+      const btnCruzamento = document.getElementById('btnCruzamento');
+      const excelCadastralInput = document.getElementById('excelCadastralInput');
+      const excelCadastralStatus = document.getElementById('excelCadastralStatus');
+      const progressWrap = document.getElementById('progressWrap');
+      const progressLabel = document.getElementById('progressLabel');
+      const progressBar = document.getElementById('progressBar');
+      const progressPct = document.getElementById('progressPct');
+      const tbody = document.getElementById('tbody');
+      const countEl = document.getElementById('count');
+      const emptyState = document.getElementById('emptyState');
+
+      const LIMITE_FATURAMENTO = 12000;
+
+      let dados0150 = [];
+      let c100PorPart = {};
+      let excelCadastral = {}; // cpf (só dígitos) -> { nome, endereco, bairro, cep, municipio, uf, telefone }
+
+      function normalizeCPF(cpf) {
+        return String(cpf || '').replace(/\D/g, '');
+      }
+
+      function getDisplayRow(r) {
+        var cpfNorm = normalizeCPF(r.cpf);
+        var cad = excelCadastral[cpfNorm];
+        return {
+          nome: cad ? (cad.nome || r.nome) : r.nome,
+          endereco: cad ? (cad.endereco || r.endereco) : r.endereco,
+          numero: r.numero,
+          compl: r.compl,
+          bairro: cad ? (cad.bairro || r.bairro) : r.bairro,
+          codMun: r.codMun,
+          municipio: cad ? cad.municipio : '',
+          cep: cad ? cad.cep : '',
+          telefone: cad ? cad.telefone : ''
+        };
+      }
+
+      function parseLine0150(line) {
+        const parts = line.split('|');
+        if (parts.length < 2 || parts[1] !== '0150') return null;
+        return {
+          reg: parts[1] || '',
+          codPart: parts[2] || '',
+          nome: parts[3] || '',
+          pais: parts[4] || '',
+          cnpj: parts[5] || '',
+          cpf: parts[6] || '',
+          ie: parts[7] || '',
+          codMun: parts[8] || '',
+          endereco: parts[10] || '',
+          numero: parts[11] || '',
+          compl: parts[12] || '',
+          bairro: parts[13] || ''
+        };
+      }
+
+      // C100: REG(1), IND_OPER(2), IND_EMIT(3), COD_PART(4), COD_MOD(5), COD_SIT(6), SER(7), NUM_DOC(8), CHV_NFE(9), DT_DOC(10), DT_E_S(11), VL_DOC(12)...
+      function parseLineC100(line) {
+        const parts = line.split('|');
+        if (parts.length < 10 || parts[1] !== 'C100') return null;
+        var indOper = (parts[2] || '').trim();
+        var indEmit = (parts[3] || '').trim();
+        var codMod = (parts[5] || '').trim();
+        var codSit = (parts[6] || '').trim();
+        return {
+          codPart: (parts[4] || '').trim(),
+          indOper: indOper,
+          indEmit: indEmit,
+          codMod: codMod,
+          codSit: codSit,
+          numDoc: parts[8] || '',
+          chvNfe: parts[9] || '',
+          dtDoc: parts[10] || '',
+          vlDoc: (parts[12] || '').replace(',', '.'),
+          cfops: []
+        };
+      }
+
+      function c100IncluirNaListagem(row) {
+        return (row.indOper === '0' || row.indOper === '1') && row.indEmit === '0' && row.codMod === '55' && row.codSit === '00';
+      }
+
+      function notaIncluirNaListagem(nota) {
+        if (nota.indOper === '1') return true;
+        if (nota.indOper === '0') {
+          var cfops = nota.cfops || [];
+          return cfops.some(function (cf) {
+            var c = String(cf).trim().charAt(0);
+            return c === '1' || c === '2';
+          });
+        }
+        return false;
+      }
+
+      function parseLineC190(line) {
+        var parts = line.split('|');
+        if (parts.length < 4 || parts[1] !== 'C190') return null;
+        return (parts[3] || '').trim();
+      }
+
+      function fmtValor(x) {
+        var n = typeof x === 'number' ? x : (parseFloat(String(x).replace(',', '.')) || 0);
+        return n.toFixed(2).replace('.', ',');
+      }
+
+      function fmtMoeda(x) {
+        var n = typeof x === 'number' ? x : (parseFloat(String(x).replace(',', '.')) || 0);
+        var neg = n < 0;
+        n = Math.abs(n);
+        var s = n.toFixed(2).replace('.', ',');
+        var parts = s.split(',');
+        var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return (neg ? '-R$ ' : 'R$ ') + intPart + ',' + (parts[1] || '00');
+      }
+
+      function notaCfopIniciaCom(nota, digitos) {
+        var cfops = nota.cfops || [];
+        return cfops.some(function (cf) {
+          var c = String(cf).trim().charAt(0);
+          return digitos.indexOf(c) !== -1;
+        });
+      }
+
+      function totalSaidas(codPart) {
+        var notas = c100PorPart[codPart] || [];
+        var t = 0;
+        notas.forEach(function (n) {
+          if (n.indOper === '1' && (notaCfopIniciaCom(n, '56') || !(n.cfops && n.cfops.length))) t += parseFloat(String(n.vlDoc).replace(',', '.')) || 0;
+        });
+        return t;
+      }
+
+      function totalEntradas(codPart) {
+        var notas = c100PorPart[codPart] || [];
+        var t = 0;
+        notas.forEach(function (n) {
+          if (n.indOper === '0' && notaCfopIniciaCom(n, '12')) t += parseFloat(String(n.vlDoc).replace(',', '.')) || 0;
+        });
+        return t;
+      }
+
+      function saldoFinal(codPart) {
+        return totalSaidas(codPart) - totalEntradas(codPart);
+      }
+
+      function getSomenteCPF() {
+        return dados0150.filter(function (r) {
+          return (r.cpf && r.cpf.trim()) && (!r.cnpj || !r.cnpj.trim());
+        });
+      }
+
+      function aplicarFiltroFaturamento(rows) {
+        var filtro = (document.querySelector('input[name="filtroFat"]:checked') || {}).value || 'total';
+        if (filtro === 'total') return rows;
+        return rows.filter(function (r) {
+          var saidas = totalSaidas(r.codPart);
+          if (filtro === 'ate_12000') return saidas <= LIMITE_FATURAMENTO;
+          if (filtro === 'acima_12000') return saidas > LIMITE_FATURAMENTO;
+          return true;
+        });
+      }
+
+      function renderTable(rows) {
+        rows = aplicarFiltroFaturamento(rows);
+        tbody.innerHTML = '';
+        if (!rows.length) {
+          emptyState.style.display = 'block';
+          countEl.textContent = '';
+          return;
+        }
+        emptyState.style.display = 'none';
+        var totalNotas = 0;
+        rows.forEach(function (r) { totalNotas += (c100PorPart[r.codPart] || []).length; });
+        countEl.innerHTML = rows.length + ' participante(s) com CPF. ' + totalNotas + ' nota(s) C100 (Saída + Entrada com CFOP 1xxx/2xxx, Própria, Modelo 55, Situação 00).';
+        rows.forEach(function (r) {
+          var notas = c100PorPart[r.codPart] || [];
+          var saidas = totalSaidas(r.codPart);
+          var entradas = totalEntradas(r.codPart);
+          var saldo = saldoFinal(r.codPart);
+          var d = getDisplayRow(r);
+          var trClient = document.createElement('tr');
+          trClient.className = 'row-client';
+          trClient.innerHTML =
+            '<td>' + (d.nome || '') + '</td>' +
+            '<td>' + (r.cpf || '') + '</td>' +
+            '<td>' + (d.endereco || '') + '</td>' +
+            '<td>' + (d.numero || '') + '</td>' +
+            '<td>' + (d.compl || '') + '</td>' +
+            '<td>' + (d.bairro || '') + '</td>' +
+            '<td>' + (d.municipio || '') + '</td>' +
+            '<td>' + (d.cep || '') + '</td>' +
+            '<td>' + (d.telefone || '') + '</td>' +
+            '<td>' + (notas.length ? notas.length + ' nota(s)' : '—') + '</td>' +
+            '<td></td>' +
+            '<td></td>' +
+            '<td class="col-valor">' + (saidas !== 0 ? fmtMoeda(saidas) : '—') + '</td>' +
+            '<td class="col-valor">' + (entradas !== 0 ? fmtMoeda(entradas) : '—') + '</td>' +
+            '<td class="total-cell col-valor">' + (saidas !== 0 || entradas !== 0 ? fmtMoeda(saldo) : '—') + '</td>' +
+            '<td></td>' +
+            '<td></td>';
+          tbody.appendChild(trClient);
+          notas.forEach(function (n) {
+            var cfopsStr = (n.cfops && n.cfops.length) ? n.cfops.join(', ') : '—';
+            var trNote = document.createElement('tr');
+            trNote.className = 'row-note';
+            trNote.innerHTML =
+              '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>' +
+              '<td>' + (n.numDoc || '') + '</td>' +
+              '<td>' + (n.dtDoc || '') + '</td>' +
+              '<td class="col-valor">' + fmtMoeda(n.vlDoc) + '</td>' +
+              '<td></td><td></td><td></td>' +
+              '<td>' + (n.chvNfe || '') + '</td>' +
+              '<td>' + cfopsStr + '</td>';
+            tbody.appendChild(trNote);
+          });
+        });
+      }
+
+      function processFile(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const text = (e.target.result || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          const lines = text.split('\n');
+          dados0150 = [];
+          c100PorPart = {};
+          var lastC100 = null;
+          lines.forEach(function (line) {
+            const trimmed = line.trim();
+            if (trimmed.indexOf('|0150|') === 0) {
+              const row = parseLine0150(trimmed);
+              if (row) dados0150.push(row);
+            } else if (trimmed.indexOf('|C100|') === 0) {
+              const row = parseLineC100(trimmed);
+              if (row) {
+                lastC100 = row;
+                if (row.codPart && c100IncluirNaListagem(row)) {
+                  if (!c100PorPart[row.codPart]) c100PorPart[row.codPart] = [];
+                  c100PorPart[row.codPart].push(row);
+                }
+              }
+            } else if (trimmed.indexOf('|C190|') === 0 && lastC100) {
+              var cfop = parseLineC190(trimmed);
+              if (cfop) lastC100.cfops.push(cfop);
+            }
+          });
+          Object.keys(c100PorPart).forEach(function (codPart) {
+            c100PorPart[codPart] = c100PorPart[codPart].filter(notaIncluirNaListagem);
+          });
+          var somenteCPF = getSomenteCPF();
+          renderTable(somenteCPF);
+          document.getElementById('filtroFaturamento').style.display = somenteCPF.length ? 'flex' : 'none';
+          btnExport.disabled = somenteCPF.length === 0;
+          btnPdf.disabled = somenteCPF.length === 0;
+          if (!Object.keys(excelCadastral).length) excelCadastralStatus.textContent = '';
+          atualizarEstadoBtnCruzamento();
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      function setProgress(pct, label) {
+        if (label !== undefined) progressLabel.textContent = label;
+        pct = Math.min(100, Math.max(0, pct));
+        progressBar.style.width = pct + '%';
+        progressPct.textContent = Math.round(pct) + '%';
+      }
+
+      function atualizarEstadoBtnCruzamento() {
+        var somenteCPF = getSomenteCPF();
+        btnCruzamento.disabled = !(somenteCPF.length > 0 && Object.keys(excelCadastral).length > 0);
+      }
+
+      function runCruzamento() {
+        var somenteCPF = getSomenteCPF();
+        if (!somenteCPF.length || !Object.keys(excelCadastral).length) return;
+        progressWrap.classList.add('active');
+        var total = somenteCPF.length;
+        var processado = 0;
+        setProgress(0, 'Cruzando Excel com SPED...');
+        function cruzamentoStep() {
+          var chunk = Math.max(1, Math.ceil(total / 50));
+          var fim = Math.min(processado + chunk, total);
+          for (var i = processado; i < fim; i++) {
+            getDisplayRow(somenteCPF[i]);
+          }
+          processado = fim;
+          var pct = (processado / total) * 100;
+          setProgress(pct, 'Cruzando Excel com SPED... (' + processado + '/' + total + ')');
+          if (processado < total) {
+            requestAnimationFrame(cruzamentoStep);
+          } else {
+            setProgress(100, 'Concluído.');
+            renderTable(somenteCPF);
+            progressWrap.classList.remove('active');
+            var n = Object.keys(excelCadastral).length;
+            excelCadastralStatus.textContent = 'Excel cadastral: ' + n + ' adquirente(s). Cruzamento com SPED concluído (CPF comparado sem hífen/pontuação).';
+          }
+        }
+        requestAnimationFrame(cruzamentoStep);
+      }
+
+      function processExcelCadastral(file) {
+        progressWrap.classList.add('active');
+        setProgress(0, 'Lendo arquivo Excel...');
+        var reader = new FileReader();
+        reader.onprogress = function (e) {
+          if (e.lengthComputable) {
+            var pct = (e.loaded / e.total) * 50;
+            setProgress(pct, 'Lendo arquivo Excel...');
+          }
+        };
+        reader.onload = function (e) {
+          try {
+            setProgress(50, 'Processando planilha...');
+            var ab = e.target.result;
+            var wb = XLSX.read(ab, { type: 'array' });
+            var sh = wb.Sheets[wb.SheetNames[0]];
+            var data = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '' });
+            excelCadastral = {};
+            var cpCol = null;
+            for (var i = 0; i < data.length; i++) {
+              var row = data[i];
+              if (cpCol === null) {
+                for (var c = 0; c <= 12; c++) {
+                  var val = row[c] !== undefined ? String(row[c]) : '';
+                  var digits = val.replace(/\D/g, '');
+                  if (digits.length === 11 && !isNaN(parseInt(digits, 10))) {
+                    cpCol = c;
+                    break;
+                  }
+                }
+              }
+              if (cpCol === null) continue;
+              var cpfRaw = row[cpCol] !== undefined ? String(row[cpCol]) : '';
+              var cpfNorm = cpfRaw.replace(/\D/g, '');
+              if (cpfNorm.length !== 11) continue;
+              excelCadastral[cpfNorm] = {
+                nome: row[cpCol + 1] !== undefined ? String(row[cpCol + 1]).trim() : '',
+                endereco: row[cpCol + 2] !== undefined ? String(row[cpCol + 2]).trim() : '',
+                bairro: row[cpCol + 3] !== undefined ? String(row[cpCol + 3]).trim() : '',
+                cep: row[cpCol + 4] !== undefined ? String(row[cpCol + 4]).trim() : '',
+                municipio: row[cpCol + 5] !== undefined ? String(row[cpCol + 5]).trim() : '',
+                uf: row[cpCol + 6] !== undefined ? String(row[cpCol + 6]).trim() : '',
+                telefone: row[cpCol + 7] !== undefined ? String(row[cpCol + 7]).trim() : ''
+              };
+            }
+            setProgress(100, 'Planilha carregada.');
+            progressWrap.classList.remove('active');
+            var n = Object.keys(excelCadastral).length;
+            excelCadastralStatus.textContent = 'Excel cadastral: ' + n + ' adquirente(s) carregado(s). CPF com hífen (ex.: 106986314-98) é ignorado no cruzamento. Clique em "Iniciar cruzamento" para atualizar a tabela.';
+            atualizarEstadoBtnCruzamento();
+          } catch (err) {
+            progressWrap.classList.remove('active');
+            excelCadastralStatus.textContent = 'Erro ao ler Excel cadastral: ' + (err.message || err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      document.querySelectorAll('input[name="filtroFat"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          renderTable(getSomenteCPF());
+        });
+      });
+
+      btnImport.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        const f = fileInput.files[0];
+        if (f) processFile(f);
+      });
+      btnExcelCad.addEventListener('click', function () { excelCadastralInput.click(); });
+      excelCadastralInput.addEventListener('change', function () {
+        var f = excelCadastralInput.files[0];
+        if (f) processExcelCadastral(f);
+      });
+      btnCruzamento.addEventListener('click', runCruzamento);
+
+      btnExport.addEventListener('click', function () {
+        var somenteCPF = aplicarFiltroFaturamento(getSomenteCPF());
+        if (!somenteCPF.length) return;
+        var headers = [
+          'Nome', 'CPF', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Município', 'CEP', 'Telefone',
+          'Número da Nota', 'Data (DT_DOC)', 'Valor da NF (VL_DOC)', 'Saídas (total)', 'Entradas (total)', 'Saldo Final', 'Chave NF-e (CHV_NFE)', 'CFOPs (C190)'
+        ];
+        var wsData = [headers];
+        somenteCPF.forEach(function (r) {
+          var d = getDisplayRow(r);
+          var notas = c100PorPart[r.codPart] || [];
+          var saidas = totalSaidas(r.codPart);
+          var entradas = totalEntradas(r.codPart);
+          var saldo = saldoFinal(r.codPart);
+          var saidasStr = saidas !== 0 ? fmtMoeda(saidas) : '';
+          var entradasStr = entradas !== 0 ? fmtMoeda(entradas) : '';
+          var saldoStr = (saidas !== 0 || entradas !== 0) ? fmtMoeda(saldo) : '';
+          if (notas.length === 0) {
+            wsData.push([
+              d.nome || '', r.cpf || '', d.endereco || '', d.numero || '', d.compl || '', d.bairro || '',
+              d.municipio || '', d.cep || '', d.telefone || '',
+              '', '', '', saidasStr, entradasStr, saldoStr, '', ''
+            ]);
+          } else {
+            notas.forEach(function (n, i) {
+              var cfopsStr = (n.cfops && n.cfops.length) ? n.cfops.join(', ') : '';
+              wsData.push([
+                d.nome || '', r.cpf || '', d.endereco || '', d.numero || '', d.compl || '', d.bairro || '',
+                d.municipio || '', d.cep || '', d.telefone || '',
+                n.numDoc || '', n.dtDoc || '', fmtMoeda(n.vlDoc), (i === 0 ? saidasStr : ''), (i === 0 ? entradasStr : ''), (i === 0 ? saldoStr : ''), n.chvNfe || '', cfopsStr
+              ]);
+            });
+          }
+        });
+        var ws = XLSX.utils.aoa_to_sheet(wsData);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '0150 e C100');
+        var nomeArquivo = 'Registro_0150_C100_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+        XLSX.writeFile(wb, nomeArquivo);
+      });
+
+      btnPdf.addEventListener('click', function () {
+        var somenteCPF = aplicarFiltroFaturamento(getSomenteCPF());
+        if (!somenteCPF.length) return;
+        window.print();
+      });
+    })();
+  </script>
+</body>
+</html>

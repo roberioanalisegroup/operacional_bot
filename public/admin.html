@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/assets/logo-analise-group.png" type="image/png">
+  <title>Administração · Central de Setores</title>
+  <meta name="auth-root" content="/">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b0b;
+      --panel: #141414;
+      --panel-strong: #1c1c1c;
+      --panel-border: #2d2d2d;
+      --text: #f5f1e8;
+      --muted: #b8b0a4;
+      --brand-gold: #e9af29;
+      --brand-soft: rgba(233, 175, 41, 0.12);
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(233, 175, 41, 0.18), transparent 24%),
+        linear-gradient(180deg, #050505 0%, var(--bg) 280px);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 24px 20px 48px; }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 10px 0 22px;
+    }
+    .page-head h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    }
+    .page-head p { margin: 6px 0 0; color: var(--muted); max-width: 640px; line-height: 1.5; }
+
+    .tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      border-radius: 999px; padding: 4px;
+    }
+    .tab {
+      padding: 8px 16px; border-radius: 999px; cursor: pointer; border: none;
+      background: transparent; color: var(--muted); font-weight: 600;
+      font-size: 0.88rem; font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .tab.active { background: var(--brand-gold); color: #1b1200; }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel-strong) 0%, var(--panel) 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    .panel h2 {
+      margin: 0 0 4px; font-size: 1.15rem; color: #f4e1ab;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .panel h2::before {
+      content: ""; width: 4px; height: 18px; border-radius: 999px; background: var(--brand-gold);
+    }
+    .panel p.hint { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+
+    .form-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px; margin-bottom: 14px;
+    }
+    label {
+      display: flex; flex-direction: column; gap: 6px;
+      font-size: 0.78rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    input[type=text], input[type=password], select {
+      padding: 10px 12px; border-radius: 10px;
+      background: #0f0f0f; border: 1px solid #2a2a2a;
+      color: var(--text); font-size: 0.95rem; font-family: inherit;
+      outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, select:focus {
+      border-color: var(--brand-gold);
+      box-shadow: 0 0 0 3px rgba(233, 175, 41, 0.18);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: 10px;
+      background: #1b1b1b; color: #fff7df;
+      border: 1px solid rgba(233,175,41,0.32);
+      font-weight: 600; font-size: 0.86rem; font-family: inherit;
+      cursor: pointer; transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn:hover { border-color: var(--brand-gold); background: #222; }
+    .btn.primary {
+      background: linear-gradient(135deg, #e9af29 0%, #c88a15 100%);
+      color: #1b1200; border: none; font-weight: 800;
+    }
+    .btn.primary:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(233, 175, 41, 0.22); }
+    .btn.danger {
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fecaca;
+    }
+    .btn.danger:hover { background: rgba(239, 68, 68, 0.25); border-color: var(--danger); }
+    .btn.sm { padding: 6px 10px; font-size: 0.8rem; }
+
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 10px;
+    }
+    th, td {
+      padding: 12px 10px; text-align: left; font-size: 0.9rem;
+      border-bottom: 1px solid #262626;
+    }
+    th {
+      color: var(--muted); font-weight: 600; font-size: 0.76rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    tr:hover td { background: rgba(255,255,255,0.015); }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .badge.role-admin { background: rgba(233, 175, 41, 0.2); color: #f3cb70; }
+    .badge.role-user  { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+    .badge.state-on   { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+    .badge.state-off  { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .alert {
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 0.9rem; margin-bottom: 12px;
+    }
+    .alert.error { background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.4); color: #fecaca; }
+    .alert.success { background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.4); color: #bbf7d0; }
+    .alert.info { background: rgba(233, 175, 41, 0.12); border: 1px solid rgba(233, 175, 41, 0.38); color: #f3cb70; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center; z-index: 100;
+      padding: 20px;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal {
+      width: 100%; max-width: 460px;
+      background: var(--panel-strong);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px; padding: 24px; box-shadow: var(--shadow);
+    }
+    .modal h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .modal p { margin: 0 0 14px; color: var(--muted); font-size: 0.88rem; }
+    .modal .modal-footer {
+      display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .logs-table td { font-family: "Consolas", "Courier New", monospace; font-size: 0.85rem; }
+    .logs-empty { text-align: center; padding: 30px; color: var(--muted); }
+
+    @media (max-width: 640px) {
+      .page-head { flex-direction: column; align-items: stretch; }
+      th, td { padding: 10px 6px; font-size: 0.82rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <h1>Painel do administrador</h1>
+        <p>Gerencie os usuários que podem acessar a Central de Setores e acompanhe o log de acessos.</p>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="users" type="button">Usuários</button>
+        <button class="tab" data-tab="logs" type="button">Logs de acesso</button>
+      </div>
+    </div>
+
+    <div id="tab-users" class="tab-panel active">
+      <section class="panel">
+        <h2>Novo usuário</h2>
+        <p class="hint">Crie um novo usuário com senha inicial. O usuário poderá usar o sistema imediatamente.</p>
+        <div id="create-alert"></div>
+        <form id="create-form">
+          <div class="form-grid">
+            <label>
+              Nome de usuário (login)
+              <input type="text" id="create-username" required autocomplete="off">
+            </label>
+            <label>
+              Nome de exibição
+              <input type="text" id="create-display" autocomplete="off">
+            </label>
+            <label>
+              Senha inicial (mín. 6)
+              <input type="password" id="create-password" minlength="6" required autocomplete="new-password">
+            </label>
+            <label>
+              Perfil
+              <select id="create-role">
+                <option value="user" selected>Usuário</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </label>
+          </div>
+          <button class="btn primary" type="submit">Criar usuário</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Usuários cadastrados</h2>
+        <p class="hint">Clique em <strong>Editar</strong> para alterar perfil, nome ou senha. Use <strong>Resetar</strong> para forçar nova senha no próximo login.</p>
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Nome</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Criado</th>
+              <th style="width: 220px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+
+    <div id="tab-logs" class="tab-panel">
+      <section class="panel">
+        <h2>Logs de acesso</h2>
+        <p class="hint">Histórico das últimas 200 ações (login, logout, criação, edição, remoção e troca de senha).</p>
+        <div style="display:flex; gap:8px; margin-bottom: 10px; flex-wrap: wrap;">
+          <button class="btn" id="refresh-logs" type="button">Atualizar</button>
+          <button class="btn danger" id="clear-logs" type="button">Limpar logs</button>
+        </div>
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th style="width: 180px;">Data/hora</th>
+              <th style="width: 140px;">Usuário</th>
+              <th style="width: 140px;">Ação</th>
+              <th>Dispositivo</th>
+            </tr>
+          </thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal de edição -->
+  <div class="modal-backdrop" id="edit-modal">
+    <div class="modal">
+      <h3>Editar usuário</h3>
+      <p>Deixe o campo de senha vazio para manter a senha atual.</p>
+      <div id="edit-alert"></div>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-grid">
+          <label>
+            Usuário
+            <input type="text" id="edit-username" disabled>
+          </label>
+          <label>
+            Nome de exibição
+            <input type="text" id="edit-display">
+          </label>
+          <label>
+            Perfil
+            <select id="edit-role">
+              <option value="user">Usuário</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
+          <label>
+            Nova senha (opcional, mín. 6)
+            <input type="password" id="edit-password" autocomplete="new-password">
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="edit-cancel">Cancelar</button>
+          <button type="submit" class="btn primary">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de confirmação (exclusão / reset / ativar-desativar) -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal">
+      <h3 id="confirm-title">Confirmar ação</h3>
+      <p id="confirm-message">Tem certeza?</p>
+      <div id="confirm-extra"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="confirm-cancel">Cancelar</button>
+        <button type="button" class="btn primary" id="confirm-ok">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/auth-guard.js"></script>
+  <script>
+    (async function () {
+      const payload = await AnaliseAuth.requireAdmin({
+        loginPath: "/login.html",
+        fallbackPath: "/index.html",
+      });
+      if (!payload) return;
+
+      // Abas
+      const tabs = document.querySelectorAll(".tab");
+      tabs.forEach((t) =>
+        t.addEventListener("click", () => {
+          tabs.forEach((x) => x.classList.remove("active"));
+          t.classList.add("active");
+          document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+          const panel = document.getElementById("tab-" + t.dataset.tab);
+          panel.classList.add("active");
+          if (t.dataset.tab === "logs") renderLogs();
+        })
+      );
+
+      // Alertas
+      function showAlert(container, type, msg, autoHide = true) {
+        const wrap = typeof container === "string" ? document.getElementById(container) : container;
+        wrap.innerHTML = `<div class="alert ${type}">${msg}</div>`;
+        if (autoHide) setTimeout(() => { wrap.innerHTML = ""; }, 3500);
+      }
+
+      // -------- Criação --------
+      const createForm = document.getElementById("create-form");
+      createForm.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const username = document.getElementById("create-username").value;
+        const displayName = document.getElementById("create-display").value;
+        const password = document.getElementById("create-password").value;
+        const role = document.getElementById("create-role").value;
+        try {
+          await AnaliseAuth.createUser({ username, displayName, password, role });
+          showAlert("create-alert", "success", `Usuário <strong>${username}</strong> criado com sucesso.`);
+          createForm.reset();
+          renderUsers();
+        } catch (err) {
+          showAlert("create-alert", "error", err.message || String(err), false);
+        }
+      });
+
+      // -------- Listagem --------
+      const tbody = document.querySelector("#users-table tbody");
+      async function renderUsers() {
+        const users = await AnaliseAuth.listUsers();
+        tbody.innerHTML = "";
+        users.forEach((u) => {
+          const tr = document.createElement("tr");
+          const createdAt = new Date(u.createdAt).toLocaleString("pt-BR");
+          tr.innerHTML = `
+            <td><strong>${u.username}</strong></td>
+            <td>${escapeHtml(u.displayName || "")}</td>
+            <td><span class="badge role-${u.role}">${u.role === "admin" ? "Administrador" : "Usuário"}</span></td>
+            <td><span class="badge ${u.active ? "state-on" : "state-off"}">${u.active ? "Ativo" : "Desativado"}</span></td>
+            <td>${createdAt}</td>
+            <td class="actions">
+              <button class="btn sm" data-action="edit" data-id="${u.id}">Editar</button>
+              <button class="btn sm" data-action="reset" data-id="${u.id}">Resetar</button>
+              <button class="btn sm" data-action="toggle" data-id="${u.id}">${u.active ? "Desativar" : "Ativar"}</button>
+              <button class="btn sm danger" data-action="delete" data-id="${u.id}">Remover</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      tbody.addEventListener("click", async (ev) => {
+        const btn = ev.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        const users = await AnaliseAuth.listUsers();
+        const user = users.find((u) => u.id === id);
+        if (!user) return;
+
+        if (action === "edit") openEditModal(user);
+        else if (action === "reset") openResetModal(user);
+        else if (action === "toggle") openToggleModal(user);
+        else if (action === "delete") openDeleteModal(user);
+      });
+
+      // -------- Modal edição --------
+      const editModal = document.getElementById("edit-modal");
+      const editForm = document.getElementById("edit-form");
+      function openEditModal(user) {
+        document.getElementById("edit-id").value = user.id;
+        document.getElementById("edit-username").value = user.username;
+        document.getElementById("edit-display").value = user.displayName || "";
+        document.getElementById("edit-role").value = user.role;
+        document.getElementById("edit-password").value = "";
+        document.getElementById("edit-alert").innerHTML = "";
+        editModal.classList.add("visible");
+      }
+      document.getElementById("edit-cancel").addEventListener("click", () => editModal.classList.remove("visible"));
+      editForm.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const id = document.getElementById("edit-id").value;
+        const displayName = document.getElementById("edit-display").value;
+        const role = document.getElementById("edit-role").value;
+        const password = document.getElementById("edit-password").value;
+        try {
+          const patch = { displayName, role };
+          if (password) { patch.password = password; patch.mustChangePassword = false; }
+          await AnaliseAuth.updateUser(id, patch);
+          editModal.classList.remove("visible");
+          await renderUsers();
+          showAlert("create-alert", "success", "Usuário atualizado com sucesso.");
+        } catch (err) {
+          showAlert("edit-alert", "error", err.message || String(err), false);
+        }
+      });
+
+      // -------- Modais de confirmação --------
+      const confirmModal = document.getElementById("confirm-modal");
+      const confirmTitle = document.getElementById("confirm-title");
+      const confirmMsg = document.getElementById("confirm-message");
+      const confirmExtra = document.getElementById("confirm-extra");
+      const confirmOk = document.getElementById("confirm-ok");
+      const confirmCancel = document.getElementById("confirm-cancel");
+      let currentConfirm = null;
+
+      confirmCancel.addEventListener("click", () => confirmModal.classList.remove("visible"));
+      confirmOk.addEventListener("click", async () => {
+        if (!currentConfirm) return;
+        try {
+          await currentConfirm();
+          confirmModal.classList.remove("visible");
+          await renderUsers();
+        } catch (err) {
+          confirmExtra.innerHTML = `<div class="alert error">${err.message || String(err)}</div>`;
+        }
+      });
+
+      function openDeleteModal(user) {
+        confirmTitle.textContent = "Remover usuário";
+        confirmMsg.innerHTML = `Tem certeza que deseja remover <strong>${user.username}</strong>? Esta ação não pode ser desfeita.`;
+        confirmExtra.innerHTML = "";
+        confirmOk.textContent = "Remover";
+        confirmOk.classList.remove("primary"); confirmOk.classList.add("danger");
+        currentConfirm = async () => { await AnaliseAuth.deleteUser(user.id); };
+        confirmModal.classList.add("visible");
+      }
+
+      function openToggleModal(user) {
+        const nextState = !user.active;
+        confirmTitle.textContent = nextState ? "Ativar usuário" : "Desativar usuário";
+        confirmMsg.innerHTML = nextState
+          ? `Reativar o acesso de <strong>${user.username}</strong>?`
+          : `Desativar temporariamente o acesso de <strong>${user.username}</strong>? O usuário não poderá mais entrar até ser reativado.`;
+        confirmExtra.innerHTML = "";
+        confirmOk.textContent = nextState ? "Ativar" : "Desativar";
+        confirmOk.classList.remove("danger"); confirmOk.classList.add("primary");
+        currentConfirm = async () => { await AnaliseAuth.setActive(user.id, nextState); };
+        confirmModal.classList.add("visible");
+      }
+
+      function openResetModal(user) {
+        confirmTitle.textContent = "Resetar senha";
+        confirmMsg.innerHTML = `Definir nova senha para <strong>${user.username}</strong>. O usuário será obrigado a trocá-la no próximo acesso.`;
+        confirmExtra.innerHTML = `
+          <label style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+            <span style="font-size:0.78rem; color: var(--muted); text-transform:uppercase; letter-spacing:0.06em;">
+              Nova senha temporária (mín. 6)
+            </span>
+            <input type="text" id="reset-password" value="Troca@${new Date().getFullYear()}" minlength="6" style="padding:10px 12px; border-radius:10px; background:#0f0f0f; border:1px solid #2a2a2a; color:var(--text); font-family:inherit;">
+          </label>
+        `;
+        confirmOk.textContent = "Resetar senha";
+        confirmOk.classList.remove("danger"); confirmOk.classList.add("primary");
+        currentConfirm = async () => {
+          const val = document.getElementById("reset-password").value;
+          if (!val || val.length < 6) throw new Error("A senha precisa ter ao menos 6 caracteres.");
+          await AnaliseAuth.resetPassword(user.id, val);
+          alert(`Senha de ${user.username} resetada para: ${val}\nAnote e repasse com segurança.`);
+        };
+        confirmModal.classList.add("visible");
+      }
+
+      // -------- Logs --------
+      const logsBody = document.getElementById("logs-body");
+      async function renderLogs() {
+        const logs = await AnaliseAuth.listLogs();
+        logsBody.innerHTML = "";
+        if (!logs.length) {
+          logsBody.innerHTML = `<tr><td colspan="4" class="logs-empty">Nenhum registro por aqui ainda.</td></tr>`;
+          return;
+        }
+        logs.forEach((l) => {
+          const tr = document.createElement("tr");
+          const at = new Date(l.at).toLocaleString("pt-BR");
+          const device = (l.userAgent || "").slice(0, 70);
+          const ip = l.ip ? ` · ${escapeHtml(l.ip)}` : "";
+          tr.innerHTML = `
+            <td>${at}</td>
+            <td>${escapeHtml(l.user)}</td>
+            <td>${escapeHtml(translateAction(l.action))}</td>
+            <td style="color: var(--muted);">${escapeHtml(device)}${ip}</td>
+          `;
+          logsBody.appendChild(tr);
+        });
+      }
+      function translateAction(a) {
+        const raw = String(a || "");
+        const [prefix, target] = raw.split(":");
+        const map = {
+          "login": "Login",
+          "login-failed": "Tentativa de login falhou",
+          "logout": "Logout",
+          "created": "Usuário criado",
+          "updated": "Usuário editado",
+          "deleted": "Usuário removido",
+          "reset-password": "Senha resetada",
+          "password-changed": "Senha alterada",
+          "logs-cleared": "Logs limpos",
+        };
+        const label = map[prefix] || raw;
+        return target ? `${label} (${target})` : label;
+      }
+      document.getElementById("refresh-logs").addEventListener("click", renderLogs);
+      document.getElementById("clear-logs").addEventListener("click", async () => {
+        if (!confirm("Limpar todos os registros de log?")) return;
+        await AnaliseAuth.clearLogs();
+        renderLogs();
+      });
+
+      function escapeHtml(s) {
+        return String(s ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      await renderUsers();
+    })();
+  </script>
+</body>
+</html>
