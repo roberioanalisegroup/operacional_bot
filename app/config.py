@@ -20,7 +20,7 @@ def _required(name: str) -> str:
     if not value:
         raise RuntimeError(
             f"Variável de ambiente obrigatória '{name}' não está definida. "
-            f"Configure no .env local ou no painel do Render."
+            "Configure no .env local ou nas variáveis de ambiente do provedor (Render, Vercel, etc.)."
         )
     return value
 
@@ -32,7 +32,7 @@ class Config:
 
     # Banco (Supabase Postgres) - pegue em Project Settings > Database > Connection string (URI)
     # Obs.: para hospedagem use o "Connection pooling" (porta 6543) do Supabase.
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+    DATABASE_URL = (os.getenv("DATABASE_URL") or "").strip()
 
     # JWT
     JWT_SECRET = os.getenv("JWT_SECRET") or SECRET_KEY

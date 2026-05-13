@@ -48,6 +48,38 @@ MAX_ATTEMPTS = 3           # tentativas totais ao abrir conexão
 _supabase_ipv4_notice_logged = False
 
 
+def _normalize_and_validate_dsn(dsn: str) -> str:
+    """Remove espaços e rejeita URLs HTTPS do Supabase coladas por engano em DATABASE_URL."""
+    dsn = dsn.strip()
+    if not dsn:
+        raise RuntimeError("DATABASE_URL está vazia.")
+    low = dsn.lower()
+    if low.startswith("http://") or low.startswith("https://"):
+        raise RuntimeError(
+            "DATABASE_URL não pode ser a URL do painel (https://….supabase.co). "
+            "No Supabase: Project Settings → Database → Connection string → "
+            "copie a URI Postgres (começa com postgresql://…@db.<ref>.supabase.co:5432 "
+            "ou o host do pooler na porta 6543)."
+        )
+    if not low.startswith(("postgresql://", "postgres://")):
+        raise RuntimeError(
+            "DATABASE_URL deve começar com postgresql:// ou postgres:// "
+            "(Connection string URI em Supabase → Database, não o link do projeto)."
+        )
+    try:
+        parsed = urlparse(dsn)
+    except Exception as err:
+        raise RuntimeError(f"DATABASE_URL inválida: {err}") from err
+    host = (parsed.hostname or "").lower()
+    if host.startswith(("http://", "https://")) or "://" in host:
+        raise RuntimeError(
+            "O host em DATABASE_URL está incorreto (parece incluir https://). "
+            "Use db.<project_ref>.supabase.co na conexão direta, ou o hostname do "
+            "Transaction pooler indicado no painel (porta 6543)."
+        )
+    return dsn
+
+
 def _ipv4_tcp(host: str, port: int) -> str | None:
     try:
         infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
@@ -149,6 +181,7 @@ def init_pool(dsn: str, *, min_size: int = 0, max_size: int = 0) -> None:
         return
     if not dsn:
         raise RuntimeError("DATABASE_URL não definida.")
+    dsn = _normalize_and_validate_dsn(dsn)
     logger.info("Testando conexão com o Postgres (sem pool).")
     effective = _effective_dsn(dsn)
     with psycopg.connect(effective, connect_timeout=CONNECT_TIMEOUT) as probe:
