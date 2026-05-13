@@ -33,6 +33,9 @@ ENV/
 instance/
 .webassets-cache
 
+# Gerado no deploy Vercel (cópia de static/ → public/; não versionar)
+/public/
+
 # --- Editores / SO ---
 .vscode/
 .idea/
